@@ -1,0 +1,15 @@
+# Curated starting-point base colors per occasion, used only as generate_colorways'
+# deterministic seed hue -- the actual harmony relationships (tonal, analogous,
+# complementary, etc.) are computed via real HSL math (color_math.py), never
+# invented by an LLM.
+occasion_palettes:
+  wedding_guest: {name: deep red, hex: "#8B0000"}
+  engagement: {name: blush pink, hex: "#F7C9C0"}
+  reception: {name: emerald, hex: "#0F5132"}
+  festive: {name: mustard, hex: "#D9A441"}
+  cocktail: {name: wine, hex: "#722F37"}
+  daytime: {name: ivory, hex: "#FFFDD0"}
+  evening: {name: midnight blue, hex: "#191970"}
+
+default_palette: {name: ivory, hex: "#FFFDD0"}
+metallic_accent: {name: antique gold, hex: "#C9A24B"}

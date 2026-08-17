@@ -1,0 +1,169 @@
+# Silhouette = the shape applied to a Garment. Extensible through this data
+# file -- never hardcoded as a Python enum (see docs/domain-model.md).
+silhouettes:
+  - id: straight
+    name: Straight
+    # Deliberately Indian-register only -- western dresses express this same
+    # "minimal flare, vertical line" idea through "fitted"/"structured"
+    # instead of a separately-named "straight" silhouette (section 2 audit:
+    # this was previously over-broad, generating combos like "Straight Gown"
+    # that aren't a real, distinctly-named garment concept).
+    applicable_garment_ids: [suit, kurta_set]
+    default_flare_level: minimal
+    flare_construction: controlled
+    structure_affinity: semi_structured
+    aesthetic_tags: [minimal, clean, versatile]
+    description: A vertical, minimally flared cut.
+
+  - id: a_line
+    name: A-Line
+    applicable_garment_ids: [suit, kurta_set, gown, cocktail_dress, evening_dress, lehenga]
+    default_flare_level: moderate
+    flare_construction: controlled
+    structure_affinity: structured
+    aesthetic_tags: [contemporary, flattering, structured]
+    description: A fitted upper body flaring gradually outward from the waist/hip.
+
+  - id: anarkali
+    name: Anarkali
+    applicable_garment_ids: [suit]
+    default_flare_level: high
+    # Fullness gathered from a fitted yoke/bodice, not built from stitched
+    # panels -- needs some drape to move well (Phase 1.2, section 9); a
+    # crisp/stiff fabric here reads bulkier than the same fabric would in a
+    # panel-built silhouette of similar flare amount.
+    flare_construction: gathered
+    structure_affinity: semi_structured
+    aesthetic_tags: [romance, heritage, ornamentation]
+    description: A fitted bodice flowing into a long, heavily flared frock-style skirt.
+
+  - id: kalidar
+    name: Kalidar
+    applicable_garment_ids: [suit]
+    default_flare_level: moderate
+    flare_construction: gathered
+    structure_affinity: fluid
+    aesthetic_tags: [heritage, panelled, traditional]
+    description: A panel-constructed flared suit, a lighter-flare cousin of the Anarkali.
+
+  - id: panelled
+    name: Panelled
+    applicable_garment_ids: [suit, lehenga]
+    default_flare_level: high
+    # The brief's own worked example of "controlled architectural volume" --
+    # fullness built from multiple stitched-in panels, held by the cut
+    # itself. A crisp/stiff fabric's own body gives this clean lines rather
+    # than needing drape (Phase 1.2, section 9) -- see
+    # structured_fabric_suits_controlled_flare in fabric_silhouette_rules.yaml.
+    flare_construction: controlled
+    structure_affinity: structured
+    aesthetic_tags: [structured, dramatic, tailored]
+    description: Volume built from multiple stitched-in panels rather than a single flared skirt.
+
+  - id: flared
+    name: Flared
+    # Restricted to lehenga -- a suit's "big flare" register is already the
+    # Anarkali/Kalidar/Panelled family, and a gown's is A-Line/Empire; a
+    # separate generic "Flared Suit"/"Flared Gown" was an invalid ontology
+    # combination (section 2 audit), not a real distinctly-named garment.
+    applicable_garment_ids: [lehenga]
+    default_flare_level: dramatic
+    # Maximum-volume circular/godet flare -- the register where a
+    # crisp/stiff/heavy/densely-worked fabric's bulk becomes a genuine
+    # problem rather than an asset (Phase 1.2, section 9).
+    flare_construction: dramatic
+    structure_affinity: fluid
+    aesthetic_tags: [dramatic, voluminous, romance]
+    description: Maximum-volume flare from waist/hip to hem.
+
+  - id: fish_cut
+    name: Fish-Cut
+    applicable_garment_ids: [lehenga, gown, evening_dress]
+    default_flare_level: moderate
+    flare_construction: controlled
+    structure_affinity: structured
+    aesthetic_tags: [glamour, fitted, dramatic]
+    description: Fitted through the hip and thigh, flaring sharply only below the knee.
+
+  - id: fitted
+    name: Fitted
+    # Western-register only -- Indian suits express a close cut via
+    # "straight"/"relaxed", not a separately-named "fitted" concept.
+    applicable_garment_ids: [gown, cocktail_dress, evening_dress, corset_skirt]
+    default_flare_level: minimal
+    flare_construction: controlled
+    structure_affinity: structured
+    aesthetic_tags: [glamour, minimal, body_conscious]
+    description: Close to the body throughout, minimal to no flare.
+
+  - id: relaxed
+    name: Relaxed
+    applicable_garment_ids: [kurta_set, suit]
+    default_flare_level: minimal
+    flare_construction: controlled
+    structure_affinity: fluid
+    aesthetic_tags: [minimal, comfortable, daywear]
+    description: Loose, unstructured, comfort-first cut.
+
+  - id: empire
+    name: Empire
+    applicable_garment_ids: [gown, cocktail_dress, evening_dress]
+    default_flare_level: moderate
+    flare_construction: gathered
+    structure_affinity: fluid
+    aesthetic_tags: [romance, soft, flattering]
+    description: A raised waistline just below the bust, flowing loosely below.
+
+  - id: structured
+    name: Structured
+    applicable_garment_ids: [suit, gown, jacket_set, cape_set, cocktail_dress, evening_dress]
+    default_flare_level: minimal
+    flare_construction: controlled
+    structure_affinity: structured
+    aesthetic_tags: [structured, tailored, contemporary]
+    description: Sharp, architectural lines held by the fabric's own body rather than drape.
+
+  - id: asymmetric
+    name: Asymmetric
+    applicable_garment_ids: [gown, cocktail_dress, evening_dress, skirt_top, lehenga]
+    default_flare_level: moderate
+    flare_construction: controlled
+    structure_affinity: semi_structured
+    aesthetic_tags: [contemporary, edgy, statement]
+    description: Deliberately uneven hemline, neckline, or drape.
+
+  - id: off_shoulder
+    name: Off-Shoulder
+    applicable_garment_ids: [gown, cocktail_dress, evening_dress]
+    default_flare_level: moderate
+    flare_construction: gathered
+    structure_affinity: semi_structured
+    aesthetic_tags: [glamour, romance, statement]
+    description: Neckline sits below the shoulders rather than at/above them.
+
+  - id: corset
+    name: Corset
+    applicable_garment_ids: [corset_skirt, gown, cocktail_dress, evening_dress]
+    default_flare_level: minimal
+    flare_construction: controlled
+    structure_affinity: structured
+    aesthetic_tags: [structured, glamour, body_conscious]
+    description: A boned/structured fitted bodice, typically laced or seamed.
+
+  - id: draped
+    name: Draped (no distinct silhouette variant)
+    applicable_garment_ids: [saree, blouse]
+    default_flare_level: moderate
+    flare_construction: controlled
+    structure_affinity: fluid
+    aesthetic_tags: [traditional, versatile]
+    description: Worn/draped as a single continuous shape rather than built from a chosen silhouette.
+
+  - id: pre_draped
+    name: Pre-Draped
+    applicable_garment_ids: [pre_draped_saree, saree_gown]
+    default_flare_level: moderate
+    flare_construction: controlled
+    structure_affinity: fluid
+    aesthetic_tags: [contemporary, fusion, easy_wear]
+    description: The drape is pre-constructed into the garment rather than hand-draped each wear.

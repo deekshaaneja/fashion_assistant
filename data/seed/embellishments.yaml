@@ -1,0 +1,94 @@
+# Embellishment technique knowledge backing recommend_styling's decoration
+# guidance. Phase 1 scope: no costing, no material catalog (see docs -- those
+# are later-phase concerns per the product brief's section 24 exclusions).
+embellishments:
+  - id: zari
+    type: zari
+    display_name: Zari
+    min_fabric_embellishment_tolerance: medium
+    density_guidance: moderate
+    notes: Metallic thread weaving/work, reads well on woven heritage fabrics.
+
+  - id: zardozi
+    type: zardozi
+    display_name: Zardozi
+    min_fabric_embellishment_tolerance: high
+    density_guidance: dense
+    notes: Heavy metallic thread and wire embroidery -- needs a fabric that can carry real weight.
+
+  - id: aari
+    type: aari
+    display_name: Aari
+    min_fabric_embellishment_tolerance: medium
+    density_guidance: moderate
+    notes: Fine hook-needle chain-stitch embroidery, works at moderate density on most bases.
+
+  - id: threadwork
+    type: threadwork
+    display_name: Threadwork
+    min_fabric_embellishment_tolerance: low
+    density_guidance: sparse
+    notes: Lightweight surface embroidery, safe even on delicate/sheer bases at low density.
+
+  - id: mirror_work
+    type: mirror_work
+    display_name: Mirror Work
+    min_fabric_embellishment_tolerance: medium
+    density_guidance: moderate
+    notes: Small mirrors stitched into the surface, folk/festive in character.
+
+  - id: sequins
+    type: sequins
+    display_name: Sequins
+    min_fabric_embellishment_tolerance: medium
+    density_guidance: moderate
+    notes: Reflective surface work, reads glamorous at moderate to dense placement.
+
+  - id: cutdana
+    type: cutdana
+    display_name: Cutdana
+    min_fabric_embellishment_tolerance: high
+    density_guidance: dense
+    notes: Faceted glass-bead work, heavier than sequins, needs a sturdier base.
+
+  - id: beads
+    type: beads
+    display_name: Beadwork
+    min_fabric_embellishment_tolerance: medium
+    density_guidance: moderate
+    notes: Versatile weight range depending on bead size.
+
+  - id: pearls
+    type: pearls
+    display_name: Pearl Work
+    min_fabric_embellishment_tolerance: low
+    density_guidance: sparse
+    notes: Light, elegant accent work, suits restrained placement.
+
+  - id: gota_patti
+    type: gota_patti
+    display_name: Gota Patti
+    min_fabric_embellishment_tolerance: medium
+    density_guidance: moderate
+    notes: Applique-style metallic ribbon work, festive/Rajasthani in character.
+
+  - id: applique
+    type: applique
+    display_name: Applique
+    min_fabric_embellishment_tolerance: low
+    density_guidance: sparse
+    notes: Fabric-on-fabric surface layering, lightweight relative to embroidery.
+
+  - id: lace
+    type: lace
+    display_name: Lace Trim
+    min_fabric_embellishment_tolerance: low
+    density_guidance: sparse
+    notes: Edge/border treatment rather than all-over work.
+
+  - id: embroidery
+    type: embroidery
+    display_name: Embroidery
+    min_fabric_embellishment_tolerance: medium
+    density_guidance: moderate
+    notes: General-purpose surface embroidery, the default recommendation absent a more specific technique.

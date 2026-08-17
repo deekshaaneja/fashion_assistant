@@ -1,0 +1,67 @@
+# Seed consumption assumptions, keyed by (garment_id, silhouette_id) at a
+# Medium reference size and 112cm (~44in) reference width. Starting
+# assumptions a boutique can override -- not universal manufacturing truths
+# (see docs/rule-engine.md). Combos not listed here fall back to a wide,
+# low-confidence generic band rather than fabricated precision -- see
+# calculate_consumption's fallback behavior.
+#
+# `source` is one of:
+#   seed              -- a rough starting assumption, not independently verified.
+#   curated           -- cross-checked against a named real-world reference point
+#                        (here: the product brief's own worked examples).
+#   boutique_override -- supplied by a specific boutique, not present in this seed set.
+#
+# Only (garment, silhouette) pairs that are valid per data/seed/silhouettes.yaml's
+# applicable_garment_ids are listed -- no rule exists for a combination the
+# ontology itself doesn't allow.
+consumption_rules:
+  - {garment_id: blouse, silhouette_id: draped, base_metres: 1.0, lining_modifier_m: 0.3, wastage_allowance_pct: 0.10, confidence: 0.85, source: curated, notes: "Matches the product brief's own 'Medium blouse ~1m' example."}
+  - {garment_id: saree, silhouette_id: draped, base_metres: 5.5, wastage_allowance_pct: 0.03, confidence: 0.85, source: seed}
+  - {garment_id: pre_draped_saree, silhouette_id: pre_draped, base_metres: 5.5, wastage_allowance_pct: 0.06, confidence: 0.75, source: seed}
+  - {garment_id: saree_gown, silhouette_id: pre_draped, base_metres: 5.5, lining_modifier_m: 1.5, wastage_allowance_pct: 0.08, confidence: 0.65, source: seed}
+
+  - {garment_id: kurta_set, silhouette_id: relaxed, base_metres: 2.5, wastage_allowance_pct: 0.06, confidence: 0.8, source: seed}
+  - {garment_id: kurta_set, silhouette_id: straight, base_metres: 2.5, wastage_allowance_pct: 0.06, confidence: 0.8, source: seed}
+
+  - {garment_id: suit, silhouette_id: straight, base_metres: 3.0, lining_modifier_m: 0.0, wastage_allowance_pct: 0.06, confidence: 0.8, source: seed}
+  - {garment_id: suit, silhouette_id: a_line, base_metres: 3.0, lining_modifier_m: 1.5, wastage_allowance_pct: 0.08, confidence: 0.85, source: curated, notes: "Matches the product brief's own 'Medium A-line ~3m' example (ex-lining)."}
+  - {garment_id: suit, silhouette_id: anarkali, base_metres: 5.0, lining_modifier_m: 3.0, wastage_allowance_pct: 0.08, confidence: 0.8, source: curated, notes: "Matches the product brief's own 'Medium Anarkali ~5m' example (ex-lining). This is the silhouette's natural high-flare baseline -- request flare_level=moderate for a toned-down variant."}
+  - {garment_id: suit, silhouette_id: kalidar, base_metres: 5.5, lining_modifier_m: 3.0, wastage_allowance_pct: 0.08, confidence: 0.7, source: seed}
+  - {garment_id: suit, silhouette_id: panelled, base_metres: 5.5, lining_modifier_m: 3.0, wastage_allowance_pct: 0.08, confidence: 0.7, source: seed}
+  - {garment_id: suit, silhouette_id: relaxed, base_metres: 2.7, wastage_allowance_pct: 0.06, confidence: 0.75, source: seed}
+  - {garment_id: suit, silhouette_id: structured, base_metres: 3.5, lining_modifier_m: 1.5, wastage_allowance_pct: 0.07, confidence: 0.7, source: seed}
+
+  - {garment_id: lehenga, silhouette_id: flared, base_metres: 6.5, lining_modifier_m: 3.5, border_modifier_m: 0.4, wastage_allowance_pct: 0.10, confidence: 0.7, source: seed}
+  - {garment_id: lehenga, silhouette_id: panelled, base_metres: 6.0, lining_modifier_m: 3.5, border_modifier_m: 0.4, wastage_allowance_pct: 0.10, confidence: 0.7, source: seed}
+  - {garment_id: lehenga, silhouette_id: fish_cut, base_metres: 5.0, lining_modifier_m: 3.0, border_modifier_m: 0.3, wastage_allowance_pct: 0.08, confidence: 0.7, source: seed}
+  - {garment_id: lehenga, silhouette_id: a_line, base_metres: 5.5, lining_modifier_m: 3.0, border_modifier_m: 0.3, wastage_allowance_pct: 0.08, confidence: 0.7, source: seed}
+  - {garment_id: lehenga, silhouette_id: asymmetric, base_metres: 5.5, lining_modifier_m: 3.0, border_modifier_m: 0.3, wastage_allowance_pct: 0.09, confidence: 0.6, source: seed}
+
+  - {garment_id: gown, silhouette_id: a_line, base_metres: 4.5, lining_modifier_m: 2.2, wastage_allowance_pct: 0.07, confidence: 0.7, source: seed}
+  - {garment_id: gown, silhouette_id: fitted, base_metres: 4.0, lining_modifier_m: 2.0, wastage_allowance_pct: 0.06, confidence: 0.7, source: seed}
+  - {garment_id: gown, silhouette_id: empire, base_metres: 4.0, lining_modifier_m: 2.0, wastage_allowance_pct: 0.07, confidence: 0.65, source: seed}
+  - {garment_id: gown, silhouette_id: structured, base_metres: 4.5, lining_modifier_m: 2.2, wastage_allowance_pct: 0.07, confidence: 0.65, source: seed}
+  - {garment_id: gown, silhouette_id: asymmetric, base_metres: 4.0, lining_modifier_m: 2.0, wastage_allowance_pct: 0.08, confidence: 0.6, source: seed}
+  - {garment_id: gown, silhouette_id: off_shoulder, base_metres: 4.0, lining_modifier_m: 2.0, wastage_allowance_pct: 0.07, confidence: 0.65, source: seed}
+  - {garment_id: gown, silhouette_id: corset, base_metres: 4.0, lining_modifier_m: 2.2, wastage_allowance_pct: 0.07, confidence: 0.65, source: seed}
+  - {garment_id: gown, silhouette_id: fish_cut, base_metres: 4.5, lining_modifier_m: 2.2, wastage_allowance_pct: 0.08, confidence: 0.65, source: seed}
+
+  - {garment_id: cocktail_dress, silhouette_id: fitted, base_metres: 2.5, lining_modifier_m: 1.3, wastage_allowance_pct: 0.06, confidence: 0.7, source: seed}
+  - {garment_id: cocktail_dress, silhouette_id: a_line, base_metres: 2.8, lining_modifier_m: 1.3, wastage_allowance_pct: 0.07, confidence: 0.7, source: seed}
+  - {garment_id: cocktail_dress, silhouette_id: empire, base_metres: 2.5, lining_modifier_m: 1.3, wastage_allowance_pct: 0.07, confidence: 0.65, source: seed}
+  - {garment_id: cocktail_dress, silhouette_id: asymmetric, base_metres: 2.5, lining_modifier_m: 1.3, wastage_allowance_pct: 0.08, confidence: 0.6, source: seed}
+  - {garment_id: cocktail_dress, silhouette_id: off_shoulder, base_metres: 2.3, lining_modifier_m: 1.2, wastage_allowance_pct: 0.07, confidence: 0.65, source: seed}
+  - {garment_id: cocktail_dress, silhouette_id: corset, base_metres: 2.5, lining_modifier_m: 1.3, wastage_allowance_pct: 0.07, confidence: 0.65, source: seed}
+
+  - {garment_id: evening_dress, silhouette_id: fitted, base_metres: 4.5, lining_modifier_m: 2.2, wastage_allowance_pct: 0.07, confidence: 0.7, source: seed}
+  - {garment_id: evening_dress, silhouette_id: a_line, base_metres: 5.0, lining_modifier_m: 2.4, wastage_allowance_pct: 0.08, confidence: 0.7, source: seed}
+  - {garment_id: evening_dress, silhouette_id: empire, base_metres: 4.5, lining_modifier_m: 2.2, wastage_allowance_pct: 0.07, confidence: 0.65, source: seed}
+  - {garment_id: evening_dress, silhouette_id: off_shoulder, base_metres: 4.5, lining_modifier_m: 2.2, wastage_allowance_pct: 0.07, confidence: 0.65, source: seed}
+  - {garment_id: evening_dress, silhouette_id: corset, base_metres: 4.5, lining_modifier_m: 2.4, wastage_allowance_pct: 0.07, confidence: 0.65, source: seed}
+  - {garment_id: evening_dress, silhouette_id: asymmetric, base_metres: 4.5, lining_modifier_m: 2.2, wastage_allowance_pct: 0.08, confidence: 0.6, source: seed}
+  - {garment_id: evening_dress, silhouette_id: fish_cut, base_metres: 5.0, lining_modifier_m: 2.4, wastage_allowance_pct: 0.08, confidence: 0.65, source: seed}
+
+  - {garment_id: jacket_set, silhouette_id: structured, base_metres: 4.5, lining_modifier_m: 1.5, wastage_allowance_pct: 0.08, confidence: 0.6, source: seed}
+  - {garment_id: cape_set, silhouette_id: structured, base_metres: 5.0, lining_modifier_m: 1.5, wastage_allowance_pct: 0.09, confidence: 0.6, source: seed}
+  - {garment_id: corset_skirt, silhouette_id: corset, base_metres: 3.5, lining_modifier_m: 1.3, wastage_allowance_pct: 0.07, confidence: 0.6, source: seed}
+  - {garment_id: corset_skirt, silhouette_id: fitted, base_metres: 3.0, lining_modifier_m: 1.2, wastage_allowance_pct: 0.07, confidence: 0.6, source: seed}

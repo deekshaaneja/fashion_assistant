@@ -1,0 +1,429 @@
+# Seed fabric knowledge. strong_fit_silhouettes/avoid_silhouettes are curated
+# anchors layered on top of the general property-based compatibility rules in
+# data/rules/fabric_silhouette_rules.yaml -- see docs/rule-engine.md.
+fabrics:
+  - id: georgette
+    name: Georgette
+    category: soft_synthetic_or_silk
+    composition: polyester or silk georgette
+    properties:
+      drape: fluid
+      stiffness: soft
+      transparency: semi_sheer
+      sheen: matte
+      stretch: none
+      weight_class: light
+      structure: fluid
+      embellishment_tolerance: medium
+      surface_density: none
+      gsm: {min: 50, max: 70}
+      width_cm: {min: 110, max: 115}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [anarkali, flared, panelled]
+    avoid_silhouettes: []
+    notes: The classic flowing base for heavily flared festive silhouettes.
+
+  - id: chiffon
+    name: Chiffon
+    category: sheer_synthetic_or_silk
+    composition: polyester or silk chiffon
+    properties:
+      drape: fluid
+      stiffness: soft
+      transparency: sheer
+      sheen: subtle_sheen
+      stretch: none
+      weight_class: light
+      structure: fluid
+      embellishment_tolerance: low
+      surface_density: none
+      gsm: {min: 30, max: 50}
+      width_cm: {min: 110, max: 115}
+    seasonality: [summer, all_season]
+    strong_fit_silhouettes: [flared, empire]
+    avoid_silhouettes: [structured, corset]
+    notes: Delicate and sheer -- cannot structurally carry heavy embellishment or hold sharp lines.
+
+  - id: organza
+    name: Organza
+    category: sheer_crisp_synthetic_or_silk
+    composition: polyester or silk organza
+    properties:
+      drape: crisp
+      stiffness: stiff
+      transparency: sheer
+      sheen: high_sheen
+      stretch: none
+      weight_class: light
+      structure: structured
+      embellishment_tolerance: high
+      surface_density: none
+      gsm: {min: 40, max: 60}
+      width_cm: {min: 110, max: 115}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [structured, a_line]
+    avoid_silhouettes: [flared]
+    notes: Crisp body holds structured/A-line shapes crisply; a lot of it in a dramatic flare reads bulky, not elegant.
+
+  - id: korean_organza
+    name: Korean Organza
+    category: sheer_crisp_synthetic
+    composition: polyester organza, finer weave than standard organza
+    properties:
+      drape: crisp
+      stiffness: stiff
+      transparency: sheer
+      sheen: subtle_sheen
+      stretch: none
+      weight_class: light
+      structure: structured
+      embellishment_tolerance: high
+      surface_density: none
+      gsm: {min: 45, max: 65}
+      width_cm: {min: 110, max: 115}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [structured, a_line]
+    avoid_silhouettes: [flared]
+    notes: A finer, slightly heavier-bodied organza variant; same structural behavior.
+
+  - id: silk
+    name: Silk
+    category: natural_silk
+    composition: pure or blended mulberry silk
+    properties:
+      drape: fluid_to_structured
+      stiffness: medium
+      transparency: opaque
+      sheen: high_sheen
+      stretch: none
+      weight_class: medium
+      structure: semi_structured
+      embellishment_tolerance: high
+      surface_density: none
+      gsm: {min: 60, max: 90}
+      width_cm: {min: 110, max: 115}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [a_line, straight, fitted]
+    avoid_silhouettes: []
+    notes: Versatile weight and body suit most tailored silhouettes.
+
+  - id: raw_silk
+    name: Raw Silk
+    category: natural_silk
+    composition: unrefined-texture silk (slubbed)
+    properties:
+      drape: structured
+      stiffness: medium
+      transparency: opaque
+      sheen: matte
+      stretch: none
+      weight_class: medium
+      structure: structured
+      embellishment_tolerance: medium
+      surface_density: none
+      gsm: {min: 80, max: 110}
+      width_cm: {min: 110, max: 115}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [structured, a_line]
+    avoid_silhouettes: []
+    notes: More body and texture than refined silk; holds structured shapes well.
+
+  - id: banarasi
+    name: Banarasi Silk
+    category: heritage_brocade_silk
+    composition: silk with zari brocade weave
+    properties:
+      drape: structured
+      stiffness: stiff
+      transparency: opaque
+      sheen: metallic
+      stretch: none
+      weight_class: heavy
+      structure: structured
+      embellishment_tolerance: low
+      surface_density: dense
+      border_available: true
+      motif_directional: true
+      gsm: {min: 150, max: 220}
+      width_cm: {min: 110, max: 115}
+    seasonality: [winter, all_season]
+    strong_fit_silhouettes: [flared, panelled]
+    avoid_silhouettes: [fitted, corset]
+    notes: Already carries the visual statement (dense woven motifs); too stiff/heavy for body-conscious cuts.
+
+  - id: kanjivaram
+    name: Kanjivaram Silk
+    category: heritage_brocade_silk
+    composition: silk with contrast zari border weave
+    properties:
+      drape: stiff
+      stiffness: stiff
+      transparency: opaque
+      sheen: metallic
+      stretch: none
+      weight_class: heavy
+      structure: structured
+      embellishment_tolerance: low
+      surface_density: dense
+      border_available: true
+      motif_directional: true
+      gsm: {min: 160, max: 230}
+      width_cm: {min: 110, max: 115}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [panelled]
+    avoid_silhouettes: [fitted, corset, flared]
+    notes: Very stiff heritage weave -- traditionally draped, not flared or fitted.
+
+  - id: chanderi
+    name: Chanderi
+    category: lightweight_handloom
+    composition: cotton-silk blend handloom
+    properties:
+      drape: fluid_to_structured
+      stiffness: medium
+      transparency: semi_sheer
+      sheen: subtle_sheen
+      stretch: none
+      weight_class: light
+      structure: semi_structured
+      embellishment_tolerance: medium
+      surface_density: sparse
+      gsm: {min: 60, max: 90}
+      width_cm: {min: 110, max: 115}
+    seasonality: [summer, all_season]
+    strong_fit_silhouettes: [straight, relaxed, a_line]
+    avoid_silhouettes: []
+    notes: Light handloom texture with an easy structured drape.
+
+  - id: tissue
+    name: Tissue
+    category: metallic_sheer_silk
+    composition: silk/metallic blend, very fine sheer weave
+    properties:
+      drape: fluid
+      stiffness: soft
+      transparency: semi_sheer
+      sheen: metallic
+      stretch: none
+      weight_class: light
+      structure: fluid
+      embellishment_tolerance: low
+      surface_density: none
+      gsm: {min: 30, max: 45}
+      width_cm: {min: 110, max: 115}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [flared, empire]
+    avoid_silhouettes: [structured, corset]
+    notes: Extremely fine and delicate; a shimmer fabric, not a structural one.
+
+  - id: crepe
+    name: Crepe
+    category: matte_synthetic_or_silk
+    composition: polyester or silk crepe
+    properties:
+      drape: fluid
+      stiffness: soft
+      transparency: opaque
+      sheen: matte
+      stretch: low
+      weight_class: medium
+      structure: fluid
+      embellishment_tolerance: medium
+      surface_density: none
+      gsm: {min: 90, max: 130}
+      width_cm: {min: 110, max: 150}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [straight, fitted, relaxed]
+    avoid_silhouettes: []
+    notes: Good body-skimming drape, reliable everyday-to-occasion fabric.
+
+  - id: satin
+    name: Satin
+    category: sheen_synthetic_or_silk
+    composition: polyester or silk satin
+    properties:
+      drape: fluid_to_structured
+      stiffness: medium
+      transparency: opaque
+      sheen: high_sheen
+      stretch: low
+      weight_class: medium
+      structure: semi_structured
+      embellishment_tolerance: medium
+      surface_density: none
+      gsm: {min: 100, max: 150}
+      width_cm: {min: 110, max: 150}
+    seasonality: [winter, all_season]
+    strong_fit_silhouettes: [fitted, fish_cut, a_line]
+    avoid_silhouettes: []
+    notes: High sheen reads glamorous in fitted and fish-cut lines.
+
+  - id: velvet
+    name: Velvet
+    category: pile_heavy_fabric
+    composition: polyester or silk-blend velvet
+    properties:
+      drape: structured
+      stiffness: medium
+      transparency: opaque
+      sheen: subtle_sheen
+      stretch: low
+      weight_class: heavy
+      structure: structured
+      embellishment_tolerance: medium
+      surface_density: none
+      gsm: {min: 250, max: 400}
+      width_cm: {min: 110, max: 140}
+    seasonality: [winter]
+    strong_fit_silhouettes: [structured, fitted, panelled]
+    avoid_silhouettes: []
+    notes: Heavy pile fabric -- excellent for winter occasionwear, structurally and thermally wrong for summer daywear.
+
+  - id: net
+    name: Net
+    category: sheer_mesh
+    composition: nylon or polyester net
+    properties:
+      drape: fluid
+      stiffness: stiff
+      transparency: sheer
+      sheen: matte
+      stretch: low
+      weight_class: light
+      structure: fluid
+      embellishment_tolerance: high
+      surface_density: none
+      gsm: {min: 20, max: 40}
+      width_cm: {min: 110, max: 115}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [flared, fish_cut]
+    avoid_silhouettes: []
+    notes: Sheer mesh base, almost always layered rather than used alone.
+
+  - id: tulle
+    name: Tulle
+    category: sheer_stiff_mesh
+    composition: fine nylon tulle
+    properties:
+      drape: stiff
+      stiffness: stiff
+      transparency: sheer
+      sheen: matte
+      stretch: none
+      weight_class: light
+      structure: structured
+      embellishment_tolerance: high
+      surface_density: none
+      gsm: {min: 15, max: 30}
+      width_cm: {min: 110, max: 150}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [flared, fitted]
+    avoid_silhouettes: []
+    notes: Stiffer than net -- built for structured volume (ballgown-style skirts).
+
+  - id: cotton
+    name: Cotton
+    category: natural_cotton
+    composition: pure or blended cotton
+    properties:
+      drape: soft
+      stiffness: soft
+      transparency: opaque
+      sheen: matte
+      stretch: none
+      weight_class: light
+      structure: fluid
+      embellishment_tolerance: medium
+      surface_density: none
+      gsm: {min: 100, max: 180}
+      width_cm: {min: 110, max: 150}
+    seasonality: [summer, all_season]
+    strong_fit_silhouettes: [straight, relaxed]
+    avoid_silhouettes: []
+    notes: Breathable daywear fabric, minimal structure.
+
+  - id: linen
+    name: Linen
+    category: natural_linen
+    composition: pure or blended linen
+    properties:
+      drape: stiff
+      stiffness: medium
+      transparency: opaque
+      sheen: matte
+      stretch: none
+      weight_class: medium
+      structure: semi_structured
+      embellishment_tolerance: low
+      surface_density: none
+      gsm: {min: 120, max: 200}
+      width_cm: {min: 110, max: 150}
+    seasonality: [summer]
+    strong_fit_silhouettes: [straight, relaxed]
+    avoid_silhouettes: []
+    notes: Textured, breathable, summer-only; low embellishment tolerance due to coarse weave.
+
+  - id: brocade
+    name: Brocade
+    category: heritage_woven_jacquard
+    composition: silk or synthetic brocade weave
+    properties:
+      drape: stiff
+      stiffness: stiff
+      transparency: opaque
+      sheen: metallic
+      stretch: none
+      weight_class: heavy
+      structure: structured
+      embellishment_tolerance: low
+      surface_density: dense
+      motif_directional: true
+      gsm: {min: 180, max: 260}
+      width_cm: {min: 110, max: 115}
+    seasonality: [winter, all_season]
+    strong_fit_silhouettes: [structured, panelled]
+    avoid_silhouettes: [fitted, flared, corset]
+    notes: Dense woven surface pattern -- structural garments only, not fitted or high-flare.
+
+  - id: lace
+    name: Lace
+    category: openwork_embellished
+    composition: cotton, nylon, or silk lace
+    properties:
+      drape: soft
+      stiffness: medium
+      transparency: sheer
+      sheen: matte
+      stretch: low
+      weight_class: light
+      structure: semi_structured
+      embellishment_tolerance: low
+      surface_density: dense
+      gsm: {min: 80, max: 150}
+      width_cm: {min: 110, max: 150}
+    seasonality: [all_season]
+    strong_fit_silhouettes: [fitted, off_shoulder, corset]
+    avoid_silhouettes: []
+    notes: The lace pattern itself is the decoration -- already visually dense.
+
+  - id: jacquard
+    name: Jacquard
+    category: heritage_woven_jacquard
+    composition: synthetic or silk-blend jacquard weave
+    properties:
+      drape: structured
+      stiffness: stiff
+      transparency: opaque
+      sheen: subtle_sheen
+      stretch: none
+      weight_class: heavy
+      structure: structured
+      embellishment_tolerance: low
+      surface_density: dense
+      motif_directional: true
+      gsm: {min: 170, max: 240}
+      width_cm: {min: 110, max: 115}
+    seasonality: [winter, all_season]
+    strong_fit_silhouettes: [structured, a_line]
+    avoid_silhouettes: [flared, corset]
+    notes: Woven-in pattern already carries visual weight -- structured tailored shapes suit it best.

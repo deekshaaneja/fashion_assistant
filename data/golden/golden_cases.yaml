@@ -1,0 +1,375 @@
+# Golden fashion scenarios (sections 18-19 of the product brief). Run with:
+#   .venv/bin/python scripts/run_golden_evals.py
+#
+# Checks assert classification tiers and relative ranking, not exact scores
+# (section 18: "do not overfit to exact numeric scores"). The `candidate_score`
+# cases assert against a directly-evaluated (fabric, garment, silhouette)
+# triple; their expected classifications were captured from this kernel's own
+# verified output at rule-set version 1 (data/rules/fabric_silhouette_rules.yaml),
+# so this file is also a regression guard against unintended scoring drift.
+cases:
+  # --- Section 19 worked scenarios -----------------------------------------
+
+  - name: case1_embroidered_organza_engagement_structured_and_aline_rank_highest
+    tool: recommend_silhouettes
+    input:
+      fabric_name: embroidered organza
+      declared_properties: {surface_density: dense}
+      context: {occasion: engagement, size: L, top_n: 10}
+    checks:
+      - {type: top_classification_in, expected: [BEST_USE]}
+      - {type: top_garment_in, expected: [suit, lehenga]}
+
+  - name: case1_embroidered_organza_heavy_flare_is_penalized
+    tool: candidate_score
+    input:
+      fabric_name: embroidered organza
+      declared_properties: {surface_density: dense}
+      garment_id: suit
+      silhouette_id: flared
+      context: {occasion: engagement, size: L}
+    checks:
+      - {type: classification_in, expected: [GOOD_ALTERNATIVE, POSSIBLE_NOT_IDEAL, AVOID]}
+      - {type: risk_mentions, text: "bulky"}
+
+  - name: case1_embroidered_organza_excess_embellishment_is_penalized
+    tool: candidate_score
+    input:
+      fabric_name: embroidered organza
+      declared_properties: {surface_density: dense}
+      garment_id: suit
+      silhouette_id: anarkali
+      context: {occasion: engagement, size: L}
+    checks:
+      - {type: risk_mentions, text: "overworked"}
+
+  - name: case2_georgette_anarkali_is_strong_compatibility
+    tool: candidate_score
+    input: {fabric_name: georgette, garment_id: suit, silhouette_id: anarkali, context: {occasion: festive, size: M}}
+    checks:
+      - {type: classification_in, expected: [BEST_USE]}
+      - {type: reason_mentions, text: "curated strong pairing"}
+
+  - name: case3_velvet_summer_daytime_has_low_season_suitability
+    tool: candidate_score
+    input: {fabric_name: velvet, garment_id: suit, silhouette_id: straight, context: {occasion: daytime, season: summer, size: M}}
+    checks:
+      - {type: risk_mentions, text: "summer"}
+      - {type: classification_in, expected: [GOOD_ALTERNATIVE, POSSIBLE_NOT_IDEAL, AVOID]}
+
+  - name: case4_banarasi_festive_lehenga_is_strong_compatibility
+    tool: candidate_score
+    input: {fabric_name: banarasi, garment_id: lehenga, silhouette_id: panelled, context: {occasion: festive, size: M}}
+    checks:
+      - {type: classification_in, expected: [BEST_USE]}
+
+  - name: case5_insufficient_fabric_for_full_anarkali_is_infeasible
+    tool: check_fabric_feasibility
+    input:
+      available_metres: 2.8
+      required_range: {min: 8.64, max: 9.33}
+      garment_name: Suit
+      silhouette_name: Anarkali
+      high_flare: true
+    checks:
+      - {type: status_equals, expected: INSUFFICIENT}
+      - {type: redesign_options_at_least, count: 3}
+
+  - name: case6_heavily_embroidered_organza_cocktail_dress_is_best_use
+    tool: candidate_score
+    input:
+      fabric_name: embroidered organza
+      declared_properties: {surface_density: dense, embellishment_tolerance: low}
+      garment_id: cocktail_dress
+      silhouette_id: fitted
+      context: {occasion: cocktail, size: M}
+    checks:
+      - {type: classification_in, expected: [BEST_USE]}
+
+  - name: case6_heavily_embroidered_organza_straight_kurta_ranks_lower
+    tool: candidate_score
+    input:
+      fabric_name: embroidered organza
+      declared_properties: {surface_density: dense, embellishment_tolerance: low}
+      garment_id: kurta_set
+      silhouette_id: straight
+      context: {occasion: cocktail, size: M}
+    checks:
+      - {type: classification_in, expected: [GOOD_ALTERNATIVE, POSSIBLE_NOT_IDEAL, AVOID]}
+      - {type: risk_mentions, text: "not typically positioned"}
+
+  - name: case7_a_line_suit_has_multiple_best_use_fabrics
+    tool: recommend_fabrics
+    input: {silhouette_id: a_line, garment_id: suit, context: {top_n: 10}}
+    checks:
+      - {type: best_use_count_at_least, count: 3}
+      - {type: fabric_in_best_use, fabric_id: organza}
+
+  # --- Broad fabric x silhouette x occasion sweep (verified output) -------
+
+  - name: sweep_organza_structured_suit_reception
+    tool: candidate_score
+    input: {fabric_name: organza, garment_id: suit, silhouette_id: structured, context: {occasion: reception, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_georgette_flared_lehenga_festive
+    tool: candidate_score
+    input: {fabric_name: georgette, garment_id: lehenga, silhouette_id: flared, context: {occasion: festive, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_chiffon_empire_gown_evening
+    tool: candidate_score
+    input: {fabric_name: chiffon, garment_id: gown, silhouette_id: empire, context: {occasion: evening, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_chiffon_structured_suit_is_a_poor_match
+    tool: candidate_score
+    input: {fabric_name: chiffon, garment_id: suit, silhouette_id: structured, context: {occasion: reception, size: M}}
+    checks: [{type: classification_in, expected: [POSSIBLE_NOT_IDEAL, GOOD_ALTERNATIVE, AVOID]}]
+
+  - name: sweep_banarasi_fitted_gown_cocktail
+    tool: candidate_score
+    input: {fabric_name: banarasi, garment_id: gown, silhouette_id: fitted, context: {occasion: cocktail, size: M}}
+    # Phase 1.2, section 5: "AVOID: critical incompatibility or explicit
+    # curated avoid rule." Banarasi curates `fitted` as an avoid_silhouette
+    # (data/seed/fabrics.yaml) -- a heavy, structured Indian silk brocade is
+    # a genuinely poor pick for a close-body Western fitted gown. That
+    # curated signal used to be diluted into a blended score where other
+    # components could still drag the result up to GOOD_ALTERNATIVE/
+    # BEST_USE; it now correctly forces AVOID outright.
+    checks: [{type: classification_in, expected: [AVOID]}]
+
+  - name: sweep_velvet_straight_suit_daytime_penalized_by_season
+    tool: candidate_score
+    input: {fabric_name: velvet, garment_id: suit, silhouette_id: straight, context: {occasion: daytime, size: M}}
+    checks: [{type: classification_in, expected: [GOOD_ALTERNATIVE, POSSIBLE_NOT_IDEAL]}]
+
+  - name: sweep_velvet_structured_gown_reception
+    tool: candidate_score
+    input: {fabric_name: velvet, garment_id: gown, silhouette_id: structured, context: {occasion: reception, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_silk_a_line_suit_engagement
+    tool: candidate_score
+    input: {fabric_name: silk, garment_id: suit, silhouette_id: a_line, context: {occasion: engagement, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_silk_draped_saree_wedding_guest
+    tool: candidate_score
+    input: {fabric_name: silk, garment_id: saree, silhouette_id: draped, context: {occasion: wedding_guest, size: M}}
+    checks: [{type: classification_in, expected: [GOOD_ALTERNATIVE, BEST_USE]}]
+
+  - name: sweep_chanderi_relaxed_kurta_set_daytime
+    tool: candidate_score
+    input: {fabric_name: chanderi, garment_id: kurta_set, silhouette_id: relaxed, context: {occasion: daytime, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_chanderi_straight_suit_daytime
+    tool: candidate_score
+    input: {fabric_name: chanderi, garment_id: suit, silhouette_id: straight, context: {occasion: daytime, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_tissue_flared_lehenga_wedding_guest
+    tool: candidate_score
+    input: {fabric_name: tissue, garment_id: lehenga, silhouette_id: flared, context: {occasion: wedding_guest, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_tissue_fitted_gown_cocktail
+    tool: candidate_score
+    input: {fabric_name: tissue, garment_id: gown, silhouette_id: fitted, context: {occasion: cocktail, size: M}}
+    checks: [{type: classification_in, expected: [GOOD_ALTERNATIVE, BEST_USE]}]
+
+  - name: sweep_jacquard_structured_suit_reception
+    tool: candidate_score
+    input: {fabric_name: jacquard, garment_id: suit, silhouette_id: structured, context: {occasion: reception, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_jacquard_flared_lehenga_is_a_poor_match
+    tool: candidate_score
+    input: {fabric_name: jacquard, garment_id: lehenga, silhouette_id: flared, context: {occasion: festive, size: M}}
+    checks: [{type: classification_in, expected: [GOOD_ALTERNATIVE, POSSIBLE_NOT_IDEAL, AVOID]}]
+
+  - name: sweep_cotton_relaxed_kurta_set_daytime
+    tool: candidate_score
+    input: {fabric_name: cotton, garment_id: kurta_set, silhouette_id: relaxed, context: {occasion: daytime, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_cotton_fitted_gown_evening
+    tool: candidate_score
+    input: {fabric_name: cotton, garment_id: gown, silhouette_id: fitted, context: {occasion: evening, size: M}}
+    # Phase 1.2: fabric_compatibility=32 (fluid cotton vs structured fitted,
+    # matte vs glamour) is a genuine, not marginal, mismatch -- a casual
+    # daytime cotton for a glamorous fitted evening gown is a fair
+    # POSSIBLE_NOT_IDEAL, not the GOOD_ALTERNATIVE/BEST_USE the old blended
+    # score allowed other components to paper over.
+    checks: [{type: classification_in, expected: [POSSIBLE_NOT_IDEAL, GOOD_ALTERNATIVE]}]
+
+  - name: sweep_crepe_fitted_cocktail_dress
+    tool: candidate_score
+    input: {fabric_name: crepe, garment_id: cocktail_dress, silhouette_id: fitted, context: {occasion: cocktail, size: M}}
+    # Phase 1.2: fabric_compatibility=57 is below the 65 BEST_USE floor (a
+    # fluid crepe is a mediocre, not excellent, structural match for a
+    # structured fitted cut) -- design_suitability alone can't carry this to
+    # BEST_USE even with strong context suitability.
+    checks: [{type: classification_in, expected: [GOOD_ALTERNATIVE, BEST_USE]}]
+
+  - name: sweep_crepe_straight_suit_daytime
+    tool: candidate_score
+    input: {fabric_name: crepe, garment_id: suit, silhouette_id: straight, context: {occasion: daytime, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_satin_fitted_evening_dress
+    tool: candidate_score
+    input: {fabric_name: satin, garment_id: evening_dress, silhouette_id: fitted, context: {occasion: evening, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_satin_a_line_cocktail_dress
+    tool: candidate_score
+    input: {fabric_name: satin, garment_id: cocktail_dress, silhouette_id: a_line, context: {occasion: cocktail, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_kanjivaram_draped_saree_wedding_guest
+    tool: candidate_score
+    input: {fabric_name: kanjivaram, garment_id: saree, silhouette_id: draped, context: {occasion: wedding_guest, size: M}}
+    checks: [{type: classification_in, expected: [GOOD_ALTERNATIVE, BEST_USE]}]
+
+  - name: sweep_kanjivaram_fitted_gown_is_not_ideal
+    tool: candidate_score
+    input: {fabric_name: kanjivaram, garment_id: gown, silhouette_id: fitted, context: {occasion: cocktail, size: M}}
+    # Phase 1.2, section 5: kanjivaram curates `fitted` as an avoid_silhouette
+    # -- see sweep_banarasi_fitted_gown_cocktail's comment for why this now
+    # correctly forces AVOID rather than being diluted into the blend.
+    checks: [{type: classification_in, expected: [AVOID]}]
+
+  - name: sweep_raw_silk_structured_suit_reception
+    tool: candidate_score
+    input: {fabric_name: raw_silk, garment_id: suit, silhouette_id: structured, context: {occasion: reception, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_net_flared_lehenga_wedding_guest
+    tool: candidate_score
+    input: {fabric_name: net, garment_id: lehenga, silhouette_id: flared, context: {occasion: wedding_guest, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_tulle_fitted_gown_evening
+    tool: candidate_score
+    input: {fabric_name: tulle, garment_id: gown, silhouette_id: fitted, context: {occasion: evening, size: M}}
+    # Phase 1.2: every individual component clears its gate (fabric_compat=70,
+    # construction=77, occasion_fit=90) but the blended design+context score
+    # lands just under the 75 BEST_USE threshold -- a genuinely borderline
+    # case, so GOOD_ALTERNATIVE is a legitimate outcome, not a defect.
+    checks: [{type: classification_in, expected: [GOOD_ALTERNATIVE, BEST_USE]}]
+
+  - name: sweep_linen_relaxed_kurta_set_daytime
+    tool: candidate_score
+    input: {fabric_name: linen, garment_id: kurta_set, silhouette_id: relaxed, context: {occasion: daytime, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_lace_fitted_gown_cocktail
+    tool: candidate_score
+    input: {fabric_name: lace, garment_id: gown, silhouette_id: fitted, context: {occasion: cocktail, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_lace_corset_cocktail_dress
+    tool: candidate_score
+    input: {fabric_name: lace, garment_id: cocktail_dress, silhouette_id: corset, context: {occasion: cocktail, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_brocade_structured_suit_reception
+    tool: candidate_score
+    input: {fabric_name: brocade, garment_id: suit, silhouette_id: structured, context: {occasion: reception, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  - name: sweep_brocade_fitted_gown_is_not_ideal
+    tool: candidate_score
+    input: {fabric_name: brocade, garment_id: gown, silhouette_id: fitted, context: {occasion: cocktail, size: M}}
+    # Phase 1.2, section 5: brocade curates `fitted` as an avoid_silhouette --
+    # see sweep_banarasi_fitted_gown_cocktail's comment for why this now
+    # correctly forces AVOID rather than being diluted into the blend.
+    checks: [{type: classification_in, expected: [AVOID]}]
+
+  - name: sweep_korean_organza_a_line_suit_reception
+    tool: candidate_score
+    input: {fabric_name: korean organza, garment_id: suit, silhouette_id: a_line, context: {occasion: reception, size: M}}
+    checks: [{type: classification_in, expected: [BEST_USE]}]
+
+  # --- Consumption / feasibility -------------------------------------------
+
+  - name: consumption_blouse_matches_product_brief_baseline
+    tool: calculate_consumption
+    input: {garment_id: blouse, silhouette_id: draped, size: M, fabric_width_cm: 112}
+    checks:
+      - {type: min_metres_between, low: 0.9, high: 1.6}
+      - {type: min_less_than_max}
+
+  - name: consumption_a_line_suit_matches_product_brief_baseline
+    tool: calculate_consumption
+    input: {garment_id: suit, silhouette_id: a_line, size: M, fabric_width_cm: 112, include_lining: false}
+    checks:
+      - {type: min_metres_between, low: 2.9, high: 3.4}
+
+  - name: consumption_anarkali_matches_product_brief_baseline
+    tool: calculate_consumption
+    input: {garment_id: suit, silhouette_id: anarkali, size: M, fabric_width_cm: 112, include_lining: false}
+    checks:
+      - {type: min_metres_between, low: 4.9, high: 5.6}
+
+  - name: feasibility_ample_fabric_is_feasible
+    tool: check_fabric_feasibility
+    input: {available_metres: 10.0, required_range: {min: 5.0, max: 5.5}}
+    checks: [{type: status_equals, expected: FEASIBLE}]
+
+  - name: feasibility_just_short_is_marginal
+    tool: check_fabric_feasibility
+    input: {available_metres: 4.85, required_range: {min: 5.0, max: 5.5}}
+    checks: [{type: status_equals, expected: MARGINAL}]
+
+  # --- Colorways -------------------------------------------------------------
+
+  - name: colorway_wedding_guest_gets_metallic_accent
+    tool: generate_colorways
+    input: {fabric_name: georgette, context: {occasion: wedding_guest}}
+    checks: [{type: has_metallic_accent}]
+
+  - name: colorway_dense_surface_fabric_gets_tonal_harmony
+    tool: generate_colorways
+    input:
+      fabric_name: banarasi
+      context: {occasion: wedding_guest}
+    checks: [{type: harmony_type_equals, expected: tonal}]
+
+  - name: colorway_engagement_uses_analogous_harmony
+    tool: generate_colorways
+    input: {fabric_name: silk, context: {occasion: engagement}}
+    checks: [{type: harmony_type_equals, expected: analogous}]
+
+  # --- Styling ---------------------------------------------------------------
+
+  - name: styling_embroidered_organza_a_line_matches_product_brief_example
+    tool: recommend_styling
+    input: {garment_id: suit, silhouette_id: a_line, fabric_name: organza, context: {occasion: engagement}}
+    checks:
+      - {type: field_equals, field: sleeve, expected: three_quarter}
+      - {type: field_equals, field: neckline, expected: v_neck}
+      - {type: field_equals, field: flare, expected: moderate}
+      - {type: field_is_not_none, field: dupatta}
+
+  - name: styling_gown_has_no_dupatta
+    tool: recommend_styling
+    input: {garment_id: gown, silhouette_id: fitted, fabric_name: satin}
+    checks: [{type: field_is_none, field: dupatta}]
+
+  - name: styling_dense_fabric_gets_restrained_decoration
+    tool: recommend_styling
+    input: {garment_id: suit, silhouette_id: anarkali, fabric_name: banarasi, context: {occasion: wedding_guest}}
+    checks: [{type: field_equals, field: decoration_intensity, expected: restrained}]
+
+  - name: styling_off_shoulder_silhouette_gets_off_shoulder_neckline
+    tool: recommend_styling
+    input: {garment_id: gown, silhouette_id: off_shoulder, fabric_name: satin}
+    checks: [{type: field_equals, field: neckline, expected: off_shoulder}]
+
+  - name: styling_corset_silhouette_is_sleeveless
+    tool: recommend_styling
+    input: {garment_id: corset_skirt, silhouette_id: corset, fabric_name: satin}
+    checks: [{type: field_equals, field: sleeve, expected: sleeveless}]

@@ -1,0 +1,127 @@
+# General fabric<->silhouette compatibility rules (section 14 of the product
+# brief): "prefer structured compatibility rules" over scattering
+# fabric-specific conditions in code. Each rule matches on FABRIC properties
+# and/or SILHOUETTE properties (a listed property means "must be one of these
+# values"; an omitted property means "no constraint"), and contributes a
+# score delta + a human-readable reason when it fires. Curated per-fabric
+# anchors (Fabric.strong_fit_silhouettes / avoid_silhouettes) layer on top of
+# these general rules, not instead of them -- see docs/rule-engine.md.
+#
+# Versioned: bump `version` at the top and add new rules with their own `id`
+# rather than mutating an existing rule's meaning in place, so past golden-case
+# runs stay reproducible against a known rule version.
+#
+# v2 (Phase 1.2, section 9): re-scoped the flare-related rules from a flat
+# "how much flare" (default_flare_level) condition to also require
+# `flare_construction`, since a stiff/crisp fabric that's poor for GATHERED/
+# DRAMATIC volume can be genuinely excellent for CONTROLLED volume -- this is
+# a real behavior change, not just an addition, so the version bumped.
+version: 2
+rules:
+  - id: structured_fabric_suits_structured_silhouette
+    fabric_conditions: {structure: [structured]}
+    silhouette_conditions: {structure_affinity: [structured]}
+    delta: 15
+    reason: "carries structured lines cleanly, matching this silhouette's own architecture"
+
+  - id: fluid_fabric_suits_fluid_silhouette
+    fabric_conditions: {structure: [fluid]}
+    silhouette_conditions: {structure_affinity: [fluid]}
+    delta: 12
+    reason: "drapes naturally into this silhouette's soft, flowing lines"
+
+  - id: fluid_fabric_vs_structured_silhouette
+    fabric_conditions: {structure: [fluid]}
+    silhouette_conditions: {structure_affinity: [structured]}
+    delta: -14
+    reason: "lacks the body to hold this silhouette's sharp, structured lines without added support"
+
+  - id: structured_fabric_vs_fluid_silhouette
+    fabric_conditions: {structure: [structured]}
+    silhouette_conditions: {structure_affinity: [fluid]}
+    delta: -8
+    reason: "may read stiffer than this silhouette's soft, flowing character calls for"
+
+  # --- Flare is not one undifferentiated "amount" (Phase 1.2, section 9) --
+  # CONTROLLED volume (panel/godet-built, held by the cut itself) behaves
+  # very differently from GATHERED (fullness gathered from a seam/yoke, needs
+  # some drape to move) or DRAMATIC (maximum-volume circular/godet flare).
+  # See `flare_construction` on Silhouette / docs/rule-engine.md.
+
+  - id: crisp_stiff_fabric_vs_dramatic_flare
+    fabric_conditions: {drape: [crisp, stiff]}
+    silhouette_conditions: {flare_construction: [dramatic]}
+    delta: -16
+    reason: "a crisp/stiff-bodied fabric at this much unstructured volume risks reading bulky rather than elegant"
+
+  - id: crisp_stiff_fabric_vs_gathered_flare
+    fabric_conditions: {drape: [crisp, stiff]}
+    silhouette_conditions: {flare_construction: [gathered], default_flare_level: [high, dramatic]}
+    delta: -8
+    reason: "a crisp/stiff-bodied fabric adds bulk to this gathered fullness, which wants some drape to move rather than stand"
+
+  - id: structured_fabric_suits_controlled_flare
+    fabric_conditions: {drape: [crisp, stiff]}
+    silhouette_conditions: {flare_construction: [controlled], default_flare_level: [moderate, high]}
+    delta: 12
+    reason: "the fabric's own crisp body gives this controlled, panel-built volume clean architectural lines rather than needing drape to hold its shape"
+
+  - id: heavy_fabric_vs_dramatic_flare
+    fabric_conditions: {weight_class: [heavy]}
+    silhouette_conditions: {flare_construction: [dramatic]}
+    delta: -10
+    reason: "a heavy fabric at this much unstructured volume adds real weight/bulk to the finished garment"
+
+  - id: fluid_lightweight_fabric_suits_high_flare
+    fabric_conditions: {drape: [fluid, soft], weight_class: [light]}
+    silhouette_conditions: {flare_construction: [gathered, dramatic], default_flare_level: [high, dramatic]}
+    delta: 14
+    reason: "light, fluid-draping fabric is exactly what this gathered/high-volume flare needs to move well rather than stand stiffly"
+
+  - id: sheer_fabric_vs_minimal_flare_fitted
+    fabric_conditions: {transparency: [sheer]}
+    silhouette_conditions: {default_flare_level: [minimal]}
+    delta: -6
+    reason: "a very sheer fabric in a minimal-flare/fitted cut may need lining consideration to avoid show-through"
+
+  - id: already_dense_surface_suits_minimal_aesthetic
+    fabric_conditions: {surface_density: [dense]}
+    silhouette_conditions: {aesthetic_tags: [minimal]}
+    delta: 8
+    reason: "the fabric's own dense surface work reads clearly on a clean, minimal-cut silhouette"
+
+  - id: already_dense_surface_vs_ornamentation_aesthetic
+    fabric_conditions: {surface_density: [dense]}
+    silhouette_conditions: {aesthetic_tags: [ornamentation]}
+    delta: -10
+    reason: "pairing an already visually dense fabric with a heavily ornamented silhouette style risks looking overworked"
+
+  - id: low_embellishment_tolerance_vs_ornamentation_aesthetic
+    fabric_conditions: {embellishment_tolerance: [low]}
+    silhouette_conditions: {aesthetic_tags: [ornamentation]}
+    delta: -8
+    reason: "this fabric doesn't tolerate the heavy additional embellishment this silhouette style typically carries"
+
+  - id: high_embellishment_tolerance_suits_ornamentation_aesthetic
+    fabric_conditions: {embellishment_tolerance: [high]}
+    silhouette_conditions: {aesthetic_tags: [ornamentation]}
+    delta: 8
+    reason: "tolerates the additional embellishment this silhouette style typically carries"
+
+  - id: stiff_fabric_vs_body_conscious_aesthetic
+    fabric_conditions: {stiffness: [stiff]}
+    silhouette_conditions: {aesthetic_tags: [body_conscious]}
+    delta: -10
+    reason: "a stiff-bodied fabric works against a body-conscious/fitted silhouette's need to skim the body"
+
+  - id: soft_low_stretch_fabric_suits_glamour_aesthetic
+    fabric_conditions: {sheen: [high_sheen, metallic]}
+    silhouette_conditions: {aesthetic_tags: [glamour]}
+    delta: 8
+    reason: "the fabric's sheen reads glamorous, matching this silhouette's intent"
+
+  - id: matte_fabric_vs_glamour_aesthetic
+    fabric_conditions: {sheen: [matte]}
+    silhouette_conditions: {aesthetic_tags: [glamour]}
+    delta: -4
+    reason: "a fully matte fabric slightly undersells a silhouette built for maximum sheen/glamour"

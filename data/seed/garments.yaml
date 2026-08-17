@@ -1,0 +1,122 @@
+# Garment = broad category (what piece of clothing). Silhouette (silhouettes.yaml)
+# is the separate, composable shape axis -- a named outfit like "A-line suit" is
+# the pair (garment=suit, silhouette=a_line), not one flat entry here.
+garments:
+  - id: suit
+    name: Suit (top + bottom set)
+    wear_category: indian
+    typical_components: [top, bottom, dupatta, lining]
+    occasions_fit: [wedding_guest, engagement, reception, festive, daytime]
+    description: A two/three-piece Indian ensemble of a top, a bottom, and usually a dupatta.
+
+  - id: kurta_set
+    name: Kurta Set
+    wear_category: indian
+    typical_components: [top, bottom, dupatta]
+    occasions_fit: [daytime, festive]
+    description: A relaxed, minimal-construction Indian top-and-bottom set.
+
+  - id: saree
+    name: Saree
+    wear_category: indian
+    typical_components: [blouse, lining]
+    occasions_fit: [wedding_guest, engagement, reception, festive, daytime, evening]
+    description: A traditionally hand-draped single length of fabric with a fitted blouse.
+
+  - id: pre_draped_saree
+    name: Pre-Draped Saree
+    wear_category: fusion
+    typical_components: [blouse, lining]
+    occasions_fit: [wedding_guest, reception, festive, cocktail]
+    description: A saree pre-stitched into its drape for easier wear.
+
+  - id: saree_gown
+    name: Saree Gown
+    wear_category: fusion
+    typical_components: [top, lining, dupatta]
+    occasions_fit: [reception, cocktail, evening]
+    description: A fusion piece combining saree drape elements with a stitched gown structure.
+
+  - id: lehenga
+    name: Lehenga
+    wear_category: indian
+    typical_components: [blouse, bottom, dupatta, lining, border]
+    occasions_fit: [wedding_guest, engagement, reception, festive]
+    description: A voluminous skirt with a fitted blouse and dupatta, the classic bridal/festive silhouette.
+
+  - id: sharara_set
+    name: Sharara Set
+    wear_category: indian
+    typical_components: [top, bottom, dupatta]
+    occasions_fit: [wedding_guest, engagement, festive]
+    description: A top paired with wide, flared, paneled trousers (sharara).
+
+  - id: gharara_set
+    name: Gharara Set
+    wear_category: indian
+    typical_components: [top, bottom, dupatta]
+    occasions_fit: [wedding_guest, engagement, festive]
+    description: A top paired with a structured, sharply-flared knee-split trouser (gharara).
+
+  - id: gown
+    name: Gown
+    wear_category: western
+    typical_components: [top, lining]
+    occasions_fit: [reception, cocktail, evening]
+    description: A full-length western silhouette, formal to semi-formal.
+
+  - id: cocktail_dress
+    name: Cocktail Dress
+    wear_category: western
+    typical_components: [top, lining]
+    occasions_fit: [cocktail, reception]
+    description: A shorter, party-length western dress.
+
+  - id: evening_dress
+    name: Evening Dress
+    wear_category: western
+    typical_components: [top, lining]
+    occasions_fit: [evening, reception, cocktail]
+    description: A formal, typically floor-length western dress for evening occasions.
+
+  - id: jacket_set
+    name: Jacket Set
+    wear_category: fusion
+    typical_components: [top, bottom, jacket, lining]
+    occasions_fit: [reception, cocktail, festive]
+    description: An Indian or western base layered with a structured jacket/cape.
+
+  - id: cape_set
+    name: Cape Set
+    wear_category: fusion
+    typical_components: [top, bottom, cape, lining]
+    occasions_fit: [reception, cocktail, evening]
+    description: A base layered with a dramatic cape for added silhouette drama.
+
+  - id: skirt_top
+    name: Skirt-Top Set
+    wear_category: fusion
+    typical_components: [top, bottom, lining]
+    occasions_fit: [cocktail, reception, festive]
+    description: A fitted or flared skirt paired with a separate top, indo-western in spirit.
+
+  - id: corset_skirt
+    name: Corset-Skirt Set
+    wear_category: fusion
+    typical_components: [top, bottom, lining]
+    occasions_fit: [cocktail, reception, evening]
+    description: A structured corset bodice paired with a skirt.
+
+  - id: blouse
+    name: Blouse
+    wear_category: indian
+    typical_components: [blouse, lining]
+    occasions_fit: [wedding_guest, festive, daytime]
+    description: A standalone fitted top, typically paired separately with a saree.
+
+  - id: fusion_set
+    name: Fusion Set
+    wear_category: fusion
+    typical_components: [top, bottom, dupatta]
+    occasions_fit: [cocktail, reception, festive]
+    description: An intentionally genre-blending Indian/western combination not covered by a more specific category.

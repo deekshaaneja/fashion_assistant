@@ -1,0 +1,59 @@
+"""Environment-driven settings. The LLM is optional everywhere; every tool in
+the kernel is fully functional with it disabled (the default)."""
+from __future__ import annotations
+
+from functools import lru_cache
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    llm_enabled: bool = Field(default=False, alias="LLM_ENABLED")
+    llm_base_url: str = Field(default="http://localhost:11434/v1", alias="LLM_BASE_URL")
+    llm_model: str = Field(default="qwen2.5:7b-instruct", alias="LLM_MODEL")
+    llm_api_key: str = Field(default="", alias="LLM_API_KEY")
+    request_timeout_s: int = Field(default=30, alias="REQUEST_TIMEOUT_S")
+
+    # "auto" (default) = llm_enabled decides template vs. live, matching every
+    # other provider in the kernel. "mock"/"template" force a specific
+    # deterministic Phase 2 design-generation provider regardless of
+    # llm_enabled -- "mock" in particular lets the generate-design-directions
+    # endpoint be tested immediately, independent of any external model.
+    # "live" / "openai_compatible" / "alibaba" / "aliyun" / "dashscope" are
+    # all the same thing -- OpenAICompatibleDesignGenerationProvider, which
+    # is what actually talks to Aliyun DashScope's compatible-mode endpoint
+    # per LLM_BASE_URL/LLM_MODEL/LLM_API_KEY -- accepted as aliases so the
+    # value can name the real provider being called rather than a generic
+    # label.
+    design_generation_provider: str = Field(default="auto", alias="DESIGN_GENERATION_PROVIDER")
+
+    # Phase 2 performance fix -- these apply ONLY to design generation, never
+    # to Phase 1's LanguageModelProvider.explain() calls (no global thinking
+    # toggle). Default thinking OFF: empirically, Qwen3's default "thinking"
+    # mode burns the large majority of output tokens on internal reasoning
+    # even for trivial prompts (see docs/design-engine.md), which is the
+    # dominant cause of the generate-design-directions timeout. Can be
+    # flipped back on later to A/B quality vs. latency.
+    design_generation_thinking: bool = Field(default=False, alias="DESIGN_GENERATION_THINKING")
+    # A bound on live-provider output length -- the model-facing schema is
+    # now small (creative fields only, section 3), so a single candidate's
+    # response fits comfortably well under this.
+    design_generation_max_tokens: int = Field(default=1200, alias="DESIGN_GENERATION_MAX_TOKENS")
+
+    # Multi-direction generation fix: for count>1, each direction is its own
+    # independent live call -- a partial failure (e.g. 2 of 3 succeed) is
+    # returned AS-IS by default, never silently backfilled with template
+    # designs (that would contaminate a live design-quality benchmark).
+    # Flip this on to explicitly opt into filling the missing slot(s) with
+    # the deterministic template provider instead of returning fewer designs.
+    design_generation_template_backfill: bool = Field(
+        default=False, alias="DESIGN_GENERATION_TEMPLATE_BACKFILL"
+    )
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

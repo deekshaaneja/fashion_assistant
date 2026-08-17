@@ -1,0 +1,162 @@
+# Design archetypes: structurally distinct design languages, not cosmetic
+# variations (Phase 2, section 8 -- "the directions must differ structurally
+# and aesthetically, not merely by changing neckline or color"). Each
+# archetype is a complete construction/neckline/sleeve/decoration/dupatta
+# philosophy plus a base DesignDNA vector -- the generator matches archetypes
+# against the actual (garment, silhouette, fabric) constraints and the
+# client's brief, then instantiates the surviving ones into full
+# DesignCandidates. This is the deterministic "playing field"; a generative
+# provider (template or LLM) creates within it (section 30).
+#
+# `preferred_flare_construction` / `preferred_structure_affinity` are scored
+# against the actual Silhouette's own fields (data/seed/silhouettes.yaml) --
+# an archetype that wants GATHERED volume scores poorly against a CONTROLLED
+# silhouette and vice versa, so archetype selection is itself fabric- and
+# silhouette-aware, not just aesthetic-preference-aware.
+version: 1
+archetypes:
+  - id: romantic_fluid_gathered
+    name: Romantic Fluid
+    description: >
+      Soft, flowing volume built from gathered fullness -- the classic
+      romantic register, modernized through restraint rather than more
+      decoration.
+    design_dna: {traditional_contemporary: 0.55, minimal_maximal: 0.45, soft_architectural: 0.15,
+                  romantic_sharp: 0.15, understated_glamorous: 0.55, heritage_modern: 0.45,
+                  fluid_structured: 0.15, subtle_statement: 0.45}
+    preferred_flare_construction: [gathered, dramatic]
+    preferred_flare_level: [high, dramatic]
+    preferred_structure_affinity: [fluid, semi_structured]
+    preferred_wear_categories: [indian, fusion]
+    bodice_style: fitted, softly seamed
+    panelling: kalidar-style gathered triangular panels
+    neckline_families: [v_neck, sweetheart, round]
+    neckline_depth_tendency: moderate
+    sleeve_families: [{length: three_quarter, style: straight}, {length: elbow, style: fitted}]
+    decoration_philosophy: restrained_frame
+    dupatta_philosophy: lightweight_contrast_or_tonal
+    garment_length: floor_length
+    waist_placement: natural
+    hem_treatment: clean finished, soft flare
+    style_keywords: [romantic, soft, traditional, flowing, elegant, feminine]
+
+  - id: architectural_panelled_contemporary
+    name: Architectural Panelled
+    description: >
+      Clean, tailored volume held by the cut itself rather than by drape --
+      a controlled, contemporary construction language.
+    design_dna: {traditional_contemporary: 0.75, minimal_maximal: 0.30, soft_architectural: 0.85,
+                  romantic_sharp: 0.75, understated_glamorous: 0.45, heritage_modern: 0.75,
+                  fluid_structured: 0.85, subtle_statement: 0.40}
+    preferred_flare_construction: [controlled]
+    preferred_flare_level: [moderate, high]
+    preferred_structure_affinity: [structured, semi_structured]
+    preferred_wear_categories: [indian, fusion, western]
+    bodice_style: structured, clean-seamed
+    panelling: vertical princess-line panels, tailored
+    neckline_families: [boat, high_neck, collared, square]
+    neckline_depth_tendency: high
+    sleeve_families: [{length: three_quarter, style: fitted}, {length: full, style: fitted}]
+    decoration_philosophy: clean_minimal_or_none
+    dupatta_philosophy: structural_or_omit
+    garment_length: ankle_length
+    waist_placement: natural
+    hem_treatment: sharp, clean hem
+    style_keywords: [architectural, contemporary, clean, structured, minimal, tailored, modern]
+
+  - id: minimal_draped_modern
+    name: Minimal Draped Interpretation
+    description: >
+      A pared-back reading of the silhouette -- minimal seaming, quiet
+      volume, let the fabric and cut speak without embellishment.
+    design_dna: {traditional_contemporary: 0.85, minimal_maximal: 0.15, soft_architectural: 0.55,
+                  romantic_sharp: 0.45, understated_glamorous: 0.35, heritage_modern: 0.85,
+                  fluid_structured: 0.45, subtle_statement: 0.20}
+    preferred_flare_construction: [controlled, gathered]
+    preferred_flare_level: [minimal, moderate]
+    preferred_structure_affinity: [fluid, semi_structured, structured]
+    preferred_wear_categories: [indian, fusion, western]
+    bodice_style: relaxed, minimal seaming
+    panelling: none
+    neckline_families: [round, boat, asymmetric, scoop]
+    neckline_depth_tendency: moderate
+    sleeve_families: [{length: elbow, style: straight}, {length: sleeveless, style: straight}]
+    decoration_philosophy: none_or_barely_there
+    dupatta_philosophy: omit_or_minimal_scarf
+    garment_length: calf_length
+    waist_placement: dropped
+    hem_treatment: clean straight hem
+    style_keywords: [minimal, modern, understated, clean, easy, quiet]
+
+  - id: heritage_traditional_rich
+    name: Heritage Traditional
+    description: >
+      A richer, traditional register -- fuller volume and more surface
+      presence, for briefs that explicitly lean heritage/festive/bridal.
+    design_dna: {traditional_contemporary: 0.15, minimal_maximal: 0.75, soft_architectural: 0.35,
+                  romantic_sharp: 0.20, understated_glamorous: 0.70, heritage_modern: 0.15,
+                  fluid_structured: 0.35, subtle_statement: 0.70}
+    preferred_flare_construction: [gathered, dramatic]
+    preferred_flare_level: [high, dramatic]
+    preferred_structure_affinity: [fluid, semi_structured]
+    preferred_wear_categories: [indian]
+    bodice_style: fitted, traditional bodice
+    panelling: kalidar, traditional
+    neckline_families: [round, sweetheart, jewel]
+    neckline_depth_tendency: moderate
+    sleeve_families: [{length: three_quarter, style: straight}, {length: full, style: straight}]
+    decoration_philosophy: rich_traditional
+    dupatta_philosophy: heavy_border_contrast
+    garment_length: floor_length
+    waist_placement: natural
+    hem_treatment: layered or bordered hem
+    style_keywords: [traditional, heritage, festive, rich, bridal]
+
+  - id: statement_glamour_sharp
+    name: Statement Glamour
+    description: >
+      Sharp, sculpted, statement-forward -- volume and neckline choices that
+      are meant to be noticed, without relying on heavy surface decoration.
+    design_dna: {traditional_contemporary: 0.65, minimal_maximal: 0.55, soft_architectural: 0.70,
+                  romantic_sharp: 0.80, understated_glamorous: 0.85, heritage_modern: 0.60,
+                  fluid_structured: 0.65, subtle_statement: 0.90}
+    preferred_flare_construction: [controlled, dramatic]
+    preferred_flare_level: [moderate, high, dramatic]
+    preferred_structure_affinity: [structured, semi_structured]
+    preferred_wear_categories: [western, fusion, indian]
+    bodice_style: fitted, sculpted
+    panelling: asymmetric statement panelling
+    neckline_families: [deep_v, halter, off_shoulder, keyhole]
+    neckline_depth_tendency: deep
+    sleeve_families: [{length: sleeveless, style: statement}, {length: cap, style: statement}]
+    decoration_philosophy: focal_statement
+    dupatta_philosophy: omit_or_statement_drape
+    garment_length: floor_length
+    waist_placement: natural
+    hem_treatment: clean sculpted hem
+    style_keywords: [glamorous, statement, bold, evening, dramatic, sharp]
+
+  - id: hybrid_layered_fusion
+    name: Layered Hybrid
+    description: >
+      A genuinely different garment architecture -- a layered/jacket-style
+      overlay over a simpler base, an indo-western hybrid rather than a
+      single-garment reading of the silhouette.
+    design_dna: {traditional_contemporary: 0.70, minimal_maximal: 0.40, soft_architectural: 0.60,
+                  romantic_sharp: 0.45, understated_glamorous: 0.50, heritage_modern: 0.70,
+                  fluid_structured: 0.55, subtle_statement: 0.55}
+    preferred_flare_construction: [controlled, gathered]
+    preferred_flare_level: [minimal, moderate, high]
+    preferred_structure_affinity: [semi_structured, structured]
+    preferred_wear_categories: [fusion, indian]
+    bodice_style: layered jacket-over-base construction
+    panelling: layered overlay, no traditional panelling
+    neckline_families: [collared, v_neck, round]
+    neckline_depth_tendency: moderate
+    sleeve_families: [{length: full, style: straight}, {length: three_quarter, style: straight}]
+    decoration_philosophy: selective_on_overlay
+    dupatta_philosophy: optional_replaced_by_overlay
+    garment_length: knee_length base with a longer overlay
+    waist_placement: natural
+    hem_treatment: asymmetric layered hem
+    style_keywords: [fusion, hybrid, layered, indo-western, jacket, modern]
