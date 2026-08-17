@@ -53,6 +53,21 @@ class Settings(BaseSettings):
         default=False, alias="DESIGN_GENERATION_TEMPLATE_BACKFILL"
     )
 
+    # Phase 3 -- visual fabric intelligence. Separate from LLM_* because the
+    # vision-capable model is a different model than the text model
+    # (qwen3.7-plus does NOT accept images -- empirically confirmed; see
+    # docs/vision-engine.md). "auto" (default) = vision_enabled decides
+    # mock vs. live, matching every other provider in the kernel.
+    vision_enabled: bool = Field(default=False, alias="VISION_ENABLED")
+    vision_provider: str = Field(default="auto", alias="VISION_PROVIDER")
+    vision_base_url: str = Field(default="http://localhost:11434/v1", alias="VISION_BASE_URL")
+    vision_model: str = Field(default="qwen3-vl-plus", alias="VISION_MODEL")
+    # Empty by default -- reuse LLM_API_KEY rather than duplicating a secret
+    # (section 22) unless a distinct vision credential is explicitly given.
+    vision_api_key: str = Field(default="", alias="VISION_API_KEY")
+    vision_max_tokens: int = Field(default=1500, alias="VISION_MAX_TOKENS")
+    vision_timeout_s: int = Field(default=25, alias="VISION_TIMEOUT_S")
+
 
 @lru_cache
 def get_settings() -> Settings:

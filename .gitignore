@@ -12,3 +12,6 @@ apps/web/dist/
 .DS_Store
 *.log
 .claude/
+# Real Phase 3 evaluation photographs -- not synthetic test fixtures, keep
+# out of git by default (may be proprietary boutique fabric photos).
+eval_data/
