@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 from src.domain.models.fabric import FabricProperties
-from src.domain.models.fabric_vision import FabricSubject, VisionModelOutput, VisionPropertyOut
+from src.domain.models.fabric_vision import (
+    FabricIdentityStatus,
+    FabricSubject,
+    VisionModelOutput,
+    VisionPropertyOut,
+)
 from src.fashion_engine.fabric.vision_pipeline import (
     UploadedFabricImage,
     analyze_fabric_images,
@@ -118,10 +123,40 @@ def test_user_confirmed_properties_take_precedence(monkeypatch):
 
 
 def test_user_confirmed_fabric_name_overrides_vision_and_resolves(monkeypatch):
-    _use_provider(monkeypatch, _FakeProvider(output=_valid_output(fabric_family=VisionPropertyOut(value="organza", certainty="medium"))))
+    output = _valid_output(fabric_family=VisionPropertyOut(value="organza", certainty="medium"))
+    _use_provider(monkeypatch, _FakeProvider(output=output))
     result = analyze_fabric_images([_image()], user_confirmed_fabric_name="georgette")
     assert result.fabric_profile.fabric_name == "georgette"
     assert result.fabric_profile.resolution_method == "exact"
+    # Section 14-15: a user-confirmed identity is CONFIRMED, never demoted
+    # back to a mere repository match.
+    assert result.fabric_profile.identity_status == FabricIdentityStatus.CONFIRMED
+    fabric_family_evidence = next(e for e in result.evidence if e.property == "fabric_family")
+    assert fabric_family_evidence.evidence_type == "user_confirmed"
+    assert fabric_family_evidence.value == "georgette"
+    # The original vision inference is preserved for audit, not discarded.
+    assert any(alt.value == "organza" for alt in fabric_family_evidence.alternatives)
+
+
+def test_repository_match_from_vision_alone_is_only_probable(monkeypatch):
+    """Section 14: a repository match built from vision-inferred evidence
+    (never user-confirmed) must read as PROBABLE, not a confirmed identity --
+    string-match quality (resolution_method) and vision confidence are
+    orthogonal, and a repository entry is supplementary knowledge, not new
+    visual evidence."""
+    output = _valid_output(fabric_family=VisionPropertyOut(value="organza", certainty="medium"))
+    _use_provider(monkeypatch, _FakeProvider(output=output))
+    result = analyze_fabric_images([_image()])
+    assert result.fabric_profile.resolution_method == "exact"
+    assert result.fabric_profile.identity_status == FabricIdentityStatus.PROBABLE
+
+
+def test_unresolved_fabric_name_has_unresolved_identity_status(monkeypatch):
+    output = _valid_output(fabric_family=VisionPropertyOut(certainty="unknown"))
+    _use_provider(monkeypatch, _FakeProvider(output=output))
+    result = analyze_fabric_images([_image()])
+    assert result.fabric_profile.resolution_method == "unresolved"
+    assert result.fabric_profile.identity_status == FabricIdentityStatus.UNRESOLVED
 
 
 def test_recommend_silhouettes_from_images_reuses_phase1(monkeypatch):

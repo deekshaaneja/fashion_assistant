@@ -86,12 +86,48 @@ def test_rejects_hallucinated_garment_silhouette():
     assert any("mismatch" in issue for issue in issues)
 
 
-def test_rejects_flare_construction_that_ignores_the_silhouette():
+def test_rejects_flare_construction_incoherent_with_flare_level():
+    """Phase 3.1, section 5: a HARD-invalid construction -- 'dramatic'
+    (max-volume circular/godet) construction paired with a much lower flare
+    amount is structurally nonsensical regardless of who proposed it."""
     request = _base_request()
     candidate = _base_candidate(request)
-    candidate.construction.flare_construction = "dramatic"
+    candidate.construction.flare_construction = "dramatic"  # flare_level stays at the base "moderate" ceiling
     issues = validate_candidate(candidate, request)
     assert any("flare_construction" in issue for issue in issues)
+
+
+def test_accepts_flare_construction_deviation_that_stays_coherent():
+    """Phase 3.1, section 2-5: a non-default flare_construction is a
+    legitimate creative deviation from the silhouette's own PREFERRED
+    construction, not a violation -- only genuine incoherence (checked
+    above) is rejected."""
+    request = _base_request()
+    candidate = _base_candidate(request)
+    assert request.constraints.flare_construction == "controlled"
+    candidate.construction.flare_construction = "gathered"  # deviates from the silhouette's own default
+    issues = validate_candidate(candidate, request)
+    assert issues == []
+
+
+def test_rejects_flare_level_above_the_fabric_ceiling():
+    request = _base_request()
+    candidate = _base_candidate(request)
+    assert request.constraints.effective_flare_level == "moderate"
+    candidate.construction.flare_level = "dramatic"
+    issues = validate_candidate(candidate, request)
+    assert any("flare_level" in issue and "ceiling" in issue for issue in issues)
+
+
+def test_accepts_flare_level_below_the_fabric_ceiling():
+    """Phase 3.1, section 2: a lower flare level than the ceiling is a valid
+    creative restraint, never forced back up to the ceiling."""
+    request = _base_request()
+    candidate = _base_candidate(request)
+    assert request.constraints.effective_flare_level == "moderate"
+    candidate.construction.flare_level = "minimal"
+    issues = validate_candidate(candidate, request)
+    assert issues == []
 
 
 def test_rejects_decoration_above_the_fabric_ceiling():

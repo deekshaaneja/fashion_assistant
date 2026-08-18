@@ -40,6 +40,7 @@ from dataclasses import dataclass
 import httpx
 from pydantic import ValidationError
 
+from src.domain.enums import FlareLevel
 from src.domain.models.design_dna import DesignDNA
 from src.domain.models.design_generation import (
     CandidateGenerationMetadata,
@@ -119,6 +120,26 @@ class DesignGenerationProvider(ABC):
         caller can fall back to another provider."""
 
 
+_FLARE_LEVEL_ORDER = [FlareLevel.MINIMAL, FlareLevel.MODERATE, FlareLevel.HIGH, FlareLevel.DRAMATIC]
+
+
+def _preferred_flare_level(archetype: DesignArchetype, ceiling: str) -> FlareLevel | None:
+    """Phase 3.1, section 2-3: `archetype.preferred_flare_level` already
+    existed but was previously only used for archetype *selection* fit
+    scoring, never to actually set a candidate's flare level -- every
+    template-generated design silently got the fabric's ceiling regardless
+    of the archetype's own character (e.g. a minimal/draped archetype
+    getting the same full flare as a heritage-traditional one). Picks the
+    archetype's own highest preferred level that still respects the
+    ceiling; None (defer to the ceiling as DEFAULT) if none of its
+    preferences fit under it."""
+    ceiling_idx = _FLARE_LEVEL_ORDER.index(FlareLevel(ceiling))
+    valid_values = {member.value for member in FlareLevel}
+    candidates = [FlareLevel(v) for v in archetype.preferred_flare_level if v in valid_values]
+    fitting = [level for level in candidates if _FLARE_LEVEL_ORDER.index(level) <= ceiling_idx]
+    return max(fitting, key=_FLARE_LEVEL_ORDER.index) if fitting else None
+
+
 def _bottom_for(garment: Garment, flare_construction: str) -> BottomSpec | None:
     if "bottom" not in garment.typical_components:
         return None
@@ -189,16 +210,19 @@ class TemplateDesignGenerationProvider(DesignGenerationProvider):
         decoration = recommend_decoration(fabric, archetype.decoration_philosophy, request.client_brief)
         bottom = _bottom_for(garment, constraints.flare_construction)
 
+        flare_level = _preferred_flare_level(archetype, constraints.effective_flare_level)
+        flare_level_desc = flare_level.value if flare_level else constraints.effective_flare_level
         construction = ConstructionCreative(
             bodice_style=archetype.bodice_style,
             panelling=archetype.panelling,
             waist_placement=archetype.waist_placement,
             garment_length=request.client_brief.preferred_length or archetype.garment_length,
             hem_treatment=archetype.hem_treatment,
+            flare_level=flare_level,
             rationale=(
                 f"{fabric.name}'s structural character ({fabric.properties.drape or 'unspecified drape'}, "
                 f"{fabric.properties.structure or 'unspecified structure'}) fits {archetype.name.lower()}'s "
-                f"{archetype.bodice_style} at a {constraints.effective_flare_level} flare."
+                f"{archetype.bodice_style} at a {flare_level_desc} flare."
             ),
         )
         neckline_creative = NecklineCreative(
@@ -210,6 +234,11 @@ class TemplateDesignGenerationProvider(DesignGenerationProvider):
                 fabric_role=dupatta.fabric_role,
                 fabric_description=dupatta.fabric_description,
                 color_strategy=dupatta.color_strategy,
+                weight=dupatta.weight,
+                transparency=dupatta.transparency,
+                border=dupatta.border,
+                embellishment=dupatta.embellishment,
+                ombre_direction=dupatta.ombre_direction,
                 rationale=dupatta.rationale,
             )
             if dupatta is not None
@@ -614,10 +643,15 @@ _SYSTEM_PROMPT = (
     "You are a boutique fashion design assistant. You propose creative construction/styling choices "
     "for an Indian fashion boutique WITHIN a fixed design vocabulary and hard fabric/construction "
     "constraints supplied to you. You never invent a construction choice that violates a stated constraint "
-    "(e.g. a flare level or embellishment intensity above the stated ceiling). You only provide CREATIVE "
-    "content -- never compute scores, consumption, fabric routing, or decoration treatments; those are "
-    "handled separately downstream. Respond with ONLY a single JSON object matching the given schema, no "
-    "prose outside the JSON, no markdown fences."
+    "(e.g. a flare level above the stated ceiling, or an embellishment intensity above the stated ceiling). "
+    "Within those ceilings, your construction.flare_level/flare_construction, decoration.treatments, and "
+    "dupatta weight/transparency/border/embellishment/ombre_direction are genuine creative choices -- leave "
+    "any of them null only when you have no specific preference, never as a way to avoid deciding. A lower "
+    "flare level than the ceiling, or a different flare_construction than this silhouette's own default, is "
+    "fine as long as it stays internally consistent (e.g. a 'dramatic' construction needs at least a 'high' "
+    "flare level). You never compute scores, consumption, or fabric routing -- those are handled separately "
+    "downstream. Respond with ONLY a single JSON object matching the given schema, no prose outside the "
+    "JSON, no markdown fences."
 )
 
 
@@ -671,7 +705,10 @@ def _build_single_prompt(
         f"OCCASION: {request.fashion_context.occasion or 'unspecified'}",
         "",
         "HARD CONSTRAINTS (never violate these):",
-        f"- flare ceiling: {constraints.effective_flare_level} ({constraints.flare_construction} construction)",
+        f"- flare LEVEL ceiling (you may choose this level or anything lower, never higher): "
+        f"{constraints.effective_flare_level}",
+        f"- this silhouette's own flare CONSTRUCTION (default -- propose a different one only with good reason, "
+        f"and keep it internally consistent with your chosen flare level): {constraints.flare_construction}",
         f"- decoration ceiling (not a target): {constraints.max_embellishment_intensity}",
         f"- lining required: {constraints.requires_lining}",
     ]

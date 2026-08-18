@@ -97,6 +97,14 @@ class DecorationSpec(DomainModel):
     level: DecorationLevel
     treatments: list[DecorationTreatment] = Field(default_factory=list)
     rationale: str
+    # Phase 3.1: provenance for the *treatments* -- did a creative source
+    # (model or archetype) supply a usable treatment, or did assembly have to
+    # invent one deterministically because nothing usable was proposed?
+    # `level_capped`/`invalid_treatments_dropped` are genuine signals scoring
+    # can check (section 11), not just a presence-of-rationale proxy.
+    source: str = "model"  # "model" | "deterministic_fallback"
+    level_capped: bool = False
+    invalid_treatments_dropped: int = 0
 
 
 class FinishingSpec(DomainModel):
@@ -154,16 +162,27 @@ class DesignScoreBreakdown(DomainModel):
     client_brief_fit: float = Field(ge=0.0, le=100.0)
     construction_coherence: float = Field(ge=0.0, le=100.0)
     surface_design_coherence: float = Field(ge=0.0, le=100.0)
-    color_coherence: float = Field(ge=0.0, le=100.0)
+    # Phase 3.1, section 11: no calibrated palette-vs-fabric-vs-construction
+    # coherence check exists yet -- None + `not_evaluated` is more honest than
+    # a plausible-looking constant. `overall` renormalizes its weights over
+    # only the dimensions that ARE present (section 12), never treating an
+    # unevaluated dimension as zero.
+    color_coherence: float | None = Field(default=None, ge=0.0, le=100.0)
     originality: float = Field(ge=0.0, le=100.0)
     overall: float = Field(ge=0.0, le=100.0)
+    not_evaluated: list[str] = Field(default_factory=list)
     trace: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class ConstructionCreative(DomainModel):
-    """Model-facing subset of `ConstructionSpec` -- everything except
-    `flare_level`/`flare_construction`, which are forced from
-    `DesignConstraints` (never left to the model) by `assemble_candidate`."""
+    """Model-facing subset of `ConstructionSpec`. `flare_level`/
+    `flare_construction` are genuine creative proposals here (Phase 3.1,
+    section 2-3) -- `assemble_candidate` fills them from `DesignConstraints`
+    only when the model leaves them unset (DEFAULT), and otherwise honors the
+    model's choice as long as it stays within the fabric's flare-level
+    ceiling (HARD) -- a valid non-default construction (e.g. a lower flare
+    level than the ceiling allows, for a more restrained read) must survive
+    assembly rather than being silently overwritten."""
 
     bodice_style: str
     panelling: str | None = None
@@ -171,6 +190,12 @@ class ConstructionCreative(DomainModel):
     garment_length: str
     hem_treatment: str | None = None
     slit: str | None = None
+    flare_level: FlareLevel | None = Field(
+        default=None, description="creative proposal; None = use the fabric-appropriate ceiling"
+    )
+    flare_construction: FlareConstruction | None = Field(
+        default=None, description="creative proposal; None = use this silhouette's own construction"
+    )
     rationale: str
 
 
@@ -184,21 +209,36 @@ class NecklineCreative(DomainModel):
 
 
 class DupattaCreative(DomainModel):
-    """Model-facing subset of `DupattaSpec` -- weight/transparency/border/
-    embellishment/ombre_direction are left to deterministic assembly."""
+    """Model-facing subset of `DupattaSpec` (Phase 3.1, section 8) -- a
+    creative source may propose weight/transparency/border/embellishment/
+    ombre_direction directly; `assemble_candidate` preserves whatever is
+    supplied and deterministically fills only what's genuinely missing
+    (DEFAULT), rather than nulling out visually important attributes a
+    valid proposal already gave it."""
 
     included: bool
     fabric_role: str | None = None
     fabric_description: str | None = None
     color_strategy: DupattaColorStrategy | None = None
+    weight: str | None = None
+    transparency: str | None = None
+    border: str | None = None
+    embellishment: str | None = None
+    ombre_direction: str | None = None
     rationale: str
 
 
 class DecorationCreative(DomainModel):
-    """Model-facing subset of `DecorationSpec` -- `treatments` are always
-    derived deterministically from the (clamped) level, never generated."""
+    """Model-facing subset of `DecorationSpec` (Phase 3.1, section 6) --
+    `treatments` is a genuine creative proposal (material/placement/
+    intensity/reason); `assemble_candidate` validates each proposed
+    treatment against the fabric's own ceiling/tolerance and only falls back
+    to a deterministic treatment when none was supplied or none survives
+    validation (section 7) -- it never silently replaces a valid creative
+    treatment with a generic one."""
 
     level: DecorationLevel
+    treatments: list[DecorationTreatment] | None = None
     rationale: str
 
 
@@ -211,10 +251,14 @@ class SupportingFabricSuggestion(DomainModel):
 class GeneratedDesignContent(DomainModel):
     """The ONLY shape a `DesignGenerationProvider` asks the model for
     (section 3, Phase 2 performance fix). Excludes every field that is
-    deterministic or application-derived -- garment/silhouette (already known
-    from the request), flare_level/flare_construction/lining_required
-    (forced from constraints), decoration.treatments, lining, finishing,
-    fabric_usage.consumption, scores, confidence, validation metadata. See
+    genuinely deterministic or application-derived -- garment/silhouette
+    (already known from the request), neckline.lining_required, lining,
+    finishing, fabric_usage.consumption, scores, confidence, validation
+    metadata. `construction.flare_level`/`flare_construction`,
+    `decoration.treatments`, and `dupatta`'s weight/transparency/border/
+    embellishment/ombre_direction ARE genuine creative proposals (Phase 3.1)
+    -- optional, filled deterministically by `assemble_candidate` only when
+    left unset, never overwritten when validly supplied. See
     `assemble_candidate` for how this is combined with deterministic data
     into a full `DesignCandidate`."""
 

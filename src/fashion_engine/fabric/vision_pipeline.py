@@ -22,6 +22,7 @@ from src.domain.models.fabric import FabricProperties
 from src.domain.models.fabric_vision import (
     Evidence,
     EvidenceType,
+    FabricIdentityStatus,
     FabricImageAnalysisResult,
     FabricProfileWithProvenance,
     FabricSubject,
@@ -186,10 +187,18 @@ def analyze_fabric_images(
     declared_properties = build_fabric_properties(evidence)
     resolution = get_fabric_repository().resolve(final_fabric_name)
 
+    if user_confirmed_fabric_name:
+        identity_status = FabricIdentityStatus.CONFIRMED
+    elif resolution.method != "unresolved":
+        identity_status = FabricIdentityStatus.PROBABLE
+    else:
+        identity_status = FabricIdentityStatus.UNRESOLVED
+
     fabric_profile = FabricProfileWithProvenance(
         fabric_name=final_fabric_name,
         resolved_fabric_id=resolution.profile.id if resolution.method != "unresolved" else None,
         resolution_method=resolution.method,
+        identity_status=identity_status,
         properties=declared_properties,
         evidence=evidence,
     )

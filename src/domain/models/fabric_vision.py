@@ -209,7 +209,15 @@ class BorderObservation(DomainModel):
 class WearPotential(DomainModel):
     """Section 17: never a single Indian/Western label -- suitability
     signals with a reason, informational only (Phase 1 is driven by the
-    concrete `FabricProperties` fields, not by this)."""
+    concrete `FabricProperties` fields, not by this).
+
+    Phase 3.1, section 16: this is a VISION_INFERRED_SIGNAL -- the vision
+    model's own subjective self-report, not a validated fashion judgement.
+    Nothing in `recommend_silhouettes_from_images`/
+    `generate_design_directions_from_images` reads these values; Phase 1
+    derives actual suitability from `FabricProperties` alone. Keep it that
+    way -- this field is for display/context only, never a shortcut around
+    Phase 1's own reasoning."""
 
     indian: float = Field(ge=0.0, le=1.0)
     western: float = Field(ge=0.0, le=1.0)
@@ -233,6 +241,19 @@ class FabricVisionObservation(DomainModel):
     suggested_additional_photos: list[str] = Field(default_factory=list)
 
 
+class FabricIdentityStatus(str, Enum):
+    """Phase 3.1, section 14-15: `resolution_method` alone describes STRING-
+    match quality against the catalog (exact/alias/partial/unresolved) --
+    orthogonal to how certain the underlying visual inference actually was.
+    A repository match is supplementary domain knowledge about a NAME, never
+    new visual evidence, and must never read as a confirmed identity unless
+    a human actually said so."""
+
+    CONFIRMED = "confirmed"  # user explicitly confirmed the fabric name
+    PROBABLE = "probable"  # repository-matched from observed/inferred vision evidence only
+    UNRESOLVED = "unresolved"  # no repository match at all
+
+
 class FabricProfileWithProvenance(DomainModel):
     """Section 18-19: maps 1:1 onto the existing canonical
     `FabricProperties` -- no parallel incompatible model. Provenance/
@@ -243,6 +264,7 @@ class FabricProfileWithProvenance(DomainModel):
     fabric_name: str
     resolved_fabric_id: str | None = None
     resolution_method: str  # exact | alias | partial | unresolved
+    identity_status: FabricIdentityStatus = FabricIdentityStatus.UNRESOLVED
     properties: FabricProperties
     evidence: list[Evidence] = Field(default_factory=list)
 
