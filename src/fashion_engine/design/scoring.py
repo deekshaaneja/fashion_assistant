@@ -1,7 +1,14 @@
 """Design scoring: Phase 2, section 19. Multiple named dimensions, never one
 vague "fashion score" -- each is independently computed and traceable.
 Scores are for reranking surviving (already-validated) candidates, not for
-deciding validity -- that's `validation.py`'s job."""
+deciding validity -- that's `validation.py`'s job.
+
+Phase 3.1, section 11-12: a dimension with no real evaluation behind it
+(no calibrated palette-vs-fabric-vs-construction check exists yet) is left
+`None` and listed in `not_evaluated` rather than filled with a plausible
+constant. `overall` renormalizes `_SCORE_WEIGHTS` over only the dimensions
+actually present for THIS candidate -- an unevaluated dimension is excluded
+from the denominator, never treated as a zero."""
 from __future__ import annotations
 
 from src.domain.models.client_brief import ClientBrief
@@ -19,6 +26,18 @@ _SCORE_WEIGHTS = {
     "color_coherence": 0.05,
     "originality": 0.05,
 }
+
+
+def _weighted_average(components: dict[str, float], weights: dict[str, float]) -> float:
+    """Same renormalize-over-what's-present pattern as Phase 1's own
+    `_weighted_score` (`src/fashion_engine/scoring/engine.py`) -- an omitted
+    (not genuinely evaluated) dimension is excluded rather than distorting
+    the blend as an implicit zero."""
+    present = {key: weight for key, weight in weights.items() if key in components}
+    if not present:
+        return 60.0
+    total_weight = sum(present.values())
+    return sum(components[key] * weight for key, weight in present.items()) / total_weight
 
 
 def score_candidate(
@@ -77,10 +96,29 @@ def score_candidate(
         f"risks_stated={bool(candidate.risks)}",
     ]
 
-    surface_design_coherence = 90.0 if candidate.decoration.rationale else 60.0
-    trace["surface_design_coherence"] = [f"decoration.rationale_present={bool(candidate.decoration.rationale)}"]
+    # Genuinely evaluated (Phase 3.1, section 11): whether the decoration
+    # that actually survived assembly needed correction against the
+    # fabric's own ceiling/tolerance, not just whether a rationale string
+    # happens to be non-empty.
+    decoration = candidate.decoration
+    surface_design_coherence = 90.0
+    if decoration.level_capped:
+        surface_design_coherence -= 20.0
+    if decoration.invalid_treatments_dropped:
+        surface_design_coherence -= 10.0 * decoration.invalid_treatments_dropped
+    surface_design_coherence = max(40.0, surface_design_coherence)
+    trace["surface_design_coherence"] = [
+        f"level_capped={decoration.level_capped}",
+        f"invalid_treatments_dropped={decoration.invalid_treatments_dropped}",
+        f"source={decoration.source}",
+    ]
 
-    color_coherence = 75.0
+    # Not yet genuinely evaluated: no calibrated check exists comparing the
+    # generated palette against fabric/construction (see
+    # generate_design_colorways, a separate, uncorrelated step). Honest
+    # unknown beats a plausible-looking constant.
+    color_coherence = None
+    not_evaluated: list[str] = ["color_coherence"]
     trace["color_coherence"] = ["not yet evaluated against a specific palette -- see generate_design_colorways"]
 
     if sibling_dna_distances:
@@ -97,10 +135,11 @@ def score_candidate(
         "client_brief_fit": client_brief_fit,
         "construction_coherence": construction_coherence,
         "surface_design_coherence": surface_design_coherence,
-        "color_coherence": color_coherence,
         "originality": originality,
     }
-    overall = sum(components[key] * weight for key, weight in _SCORE_WEIGHTS.items())
+    if color_coherence is not None:
+        components["color_coherence"] = color_coherence
+    overall = _weighted_average(components, _SCORE_WEIGHTS)
 
     return DesignScoreBreakdown(
         fabric_design_fit=round(fabric_design_fit, 1),
@@ -109,8 +148,9 @@ def score_candidate(
         client_brief_fit=round(client_brief_fit, 1),
         construction_coherence=round(construction_coherence, 1),
         surface_design_coherence=round(surface_design_coherence, 1),
-        color_coherence=round(color_coherence, 1),
+        color_coherence=color_coherence,
         originality=round(originality, 1),
         overall=round(overall, 1),
+        not_evaluated=not_evaluated,
         trace=trace,
     )

@@ -2,12 +2,23 @@
 generated DesignCandidate must pass regardless of which provider produced
 it -- a provider proposes, this disposes. A candidate failing any check here
 is rejected outright, never silently patched -- the LLM must never be able
-to silently override a fabric/construction constraint (section 2)."""
+to silently override a fabric/construction constraint (section 2).
+
+Phase 3.1, section 4: not every deviation from a DEFAULT is a violation.
+flare_construction and a below-ceiling flare_level are legitimate creative
+choices `assemble_candidate` already preserves (section 2-3) -- they are
+never rejected here. Only what's structurally impossible survives to this
+point regardless: exceeding the fabric's flare-level ceiling (HARD -- but
+`assemble_candidate` already clamps this, so the check below is a
+defense-in-depth safety net, not the primary enforcement), plus the new
+cross-field coherence invariants in `coherence.py`.
+"""
 from __future__ import annotations
 
-from src.domain.enums import DecorationLevel
+from src.domain.enums import DecorationLevel, FlareLevel
 from src.domain.models.design_generation import DesignGenerationRequest
 from src.domain.models.design_proposal import DesignCandidate
+from src.fashion_engine.design.coherence import check_coherence
 
 _DECORATION_ORDER = [
     DecorationLevel.NO_ADDITIONAL_DECORATION,
@@ -15,6 +26,7 @@ _DECORATION_ORDER = [
     DecorationLevel.MODERATE,
     DecorationLevel.STATEMENT,
 ]
+_FLARE_LEVEL_ORDER = [FlareLevel.MINIMAL, FlareLevel.MODERATE, FlareLevel.HIGH, FlareLevel.DRAMATIC]
 
 
 def validate_candidate(candidate: DesignCandidate, request: DesignGenerationRequest) -> list[str]:
@@ -32,16 +44,14 @@ def validate_candidate(candidate: DesignCandidate, request: DesignGenerationRequ
             f"garment/silhouette mismatch: expected ({request.garment_id}, {request.silhouette_id}), got "
             f"({candidate.garment.garment.id}, {candidate.garment.silhouette.id})"
         )
-    if candidate.construction.flare_construction != constraints.flare_construction:
+    ceiling = FlareLevel(constraints.effective_flare_level)
+    candidate_flare_idx = _FLARE_LEVEL_ORDER.index(FlareLevel(candidate.construction.flare_level))
+    if candidate_flare_idx > _FLARE_LEVEL_ORDER.index(ceiling):
         issues.append(
-            f"flare_construction '{candidate.construction.flare_construction}' does not match this "
-            f"silhouette's actual '{constraints.flare_construction}'"
-        )
-    if candidate.construction.flare_level != constraints.effective_flare_level:
-        issues.append(
-            f"flare_level '{candidate.construction.flare_level}' ignores the fabric-appropriate "
+            f"flare_level '{candidate.construction.flare_level}' exceeds the fabric-appropriate "
             f"'{constraints.effective_flare_level}' ceiling"
         )
+    issues.extend(check_coherence(candidate))
     if constraints.requires_lining and candidate.lining is not None and not candidate.lining.required:
         issues.append("lining marked not required, but this fabric's transparency requires it")
     if candidate.sleeves.length == "sleeveless" and candidate.sleeves.sheer:

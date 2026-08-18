@@ -4,8 +4,10 @@ persistence -- every endpoint is a direct, stateless call into src/tools/*.
 """
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, ConfigDict
+import json
+
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from src.domain.models.client_brief import ClientBrief
 from src.domain.models.common import Range
@@ -14,7 +16,11 @@ from src.domain.models.design_dna import DesignDNA
 from src.domain.models.design_proposal import DesignProposal
 from src.domain.models.fabric import FabricProperties
 from src.domain.models.fabric_analysis import FabricObservation
+from src.domain.models.fabric_vision import ImageRole
+from src.fashion_engine.fabric import vision_pipeline as _vision_pipeline
+from src.fashion_engine.fabric.vision_pipeline import UploadedFabricImage
 from src.tools.analyze_fabric import analyze_fabric as _analyze_fabric
+from src.tools.analyze_fabric_image import analyze_fabric_image as _analyze_fabric_image
 from src.tools.calculate_consumption import calculate_consumption as _calculate_consumption
 from src.tools.check_fabric_feasibility import check_fabric_feasibility as _check_fabric_feasibility
 from src.tools.design_ensemble import design_ensemble as _design_ensemble
@@ -294,3 +300,76 @@ def generate_design_colorways(req: GenerateDesignColorwaysRequest) -> list[dict]
         req.fabric_name, req.design, req.client_brief, req.fashion_context, count=req.count
     )
     return [r.model_dump() for r in results]
+
+
+# --- Phase 3: Visual Fabric Intelligence ------------------------------------
+# Multipart upload -- these are the only two endpoints in the kernel that
+# don't take a plain JSON body, since they accept image files.
+
+
+def _parse_uploaded_images(images: list[UploadFile], image_roles: str | None) -> list[UploadedFabricImage]:
+    roles_by_name: dict[str, str] = {}
+    if image_roles:
+        try:
+            roles_by_name = json.loads(image_roles)
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=400, detail=f"image_roles is not valid JSON: {exc}") from exc
+
+    uploaded: list[UploadedFabricImage] = []
+    for i, file in enumerate(images, start=1):
+        data = file.file.read()
+        image_id = file.filename or f"image_{i}"
+        role_value = roles_by_name.get(image_id) or roles_by_name.get(str(i))
+        role = None
+        if role_value:
+            try:
+                role = ImageRole(role_value.strip().lower())
+            except ValueError:
+                role = None  # an unrecognized role hint is dropped, never a hard error
+        content_type = file.content_type or "image/jpeg"
+        uploaded.append(UploadedFabricImage(image_id=image_id, data=data, content_type=content_type, role=role))
+    return uploaded
+
+
+def _parse_json_form_field(raw: str | None, model: type[BaseModel]):
+    if raw is None:
+        return None
+    try:
+        return model.model_validate_json(raw)
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=f"Invalid JSON for {model.__name__}: {exc}") from exc
+
+
+@app.post("/v1/tools/analyze-fabric-image")
+def analyze_fabric_image(
+    images: list[UploadFile] = File(...),
+    fabric_name_hint: str | None = Form(None),
+    image_roles: str | None = Form(None),
+    user_confirmed_properties: str | None = Form(None),
+    user_confirmed_fabric_name: str | None = Form(None),
+) -> dict:
+    uploaded = _parse_uploaded_images(images, image_roles)
+    confirmed_properties = _parse_json_form_field(user_confirmed_properties, FabricProperties)
+    result = _analyze_fabric_image(uploaded, fabric_name_hint, confirmed_properties, user_confirmed_fabric_name)
+    return result.model_dump()
+
+
+@app.post("/v1/tools/fabric-image/recommend-silhouettes")
+def fabric_image_recommend_silhouettes(
+    images: list[UploadFile] = File(...),
+    fabric_name_hint: str | None = Form(None),
+    image_roles: str | None = Form(None),
+    user_confirmed_properties: str | None = Form(None),
+    user_confirmed_fabric_name: str | None = Form(None),
+    context: str | None = Form(None),
+) -> dict:
+    uploaded = _parse_uploaded_images(images, image_roles)
+    confirmed_properties = _parse_json_form_field(user_confirmed_properties, FabricProperties)
+    parsed_context = _parse_json_form_field(context, RecommendationContext)
+    result = _vision_pipeline.recommend_silhouettes_from_images(
+        uploaded, fabric_name_hint, confirmed_properties, user_confirmed_fabric_name, parsed_context
+    )
+    return {
+        "image_analysis": result.image_analysis.model_dump(),
+        "silhouette_recommendation": result.silhouette_recommendation.model_dump(),
+    }
