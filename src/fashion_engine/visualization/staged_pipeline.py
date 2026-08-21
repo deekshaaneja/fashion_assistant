@@ -1,10 +1,25 @@
-"""run_staged_visualization: Phase 4.1's top-level orchestrator (section
-2's pipeline diagram) --
+"""run_staged_visualization: EXPERIMENTAL / FUTURE CAPABILITY -- NOT the
+MVP default path. `src.fashion_engine.visualization.pipeline.visualize_design()`
+is the canonical Phase 4 rendering path (fresh rebuild from the original
+`FabricMaterialReference` + current `DesignProposal`, see
+docs/visualization-engine.md). Nothing on the default path calls into this
+module.
+
+This module implements the alternative localized-edit-in-place pipeline
+(section 2's diagram) --
 
     fabric photo(s) -> Stage 1 (material reference, deterministic)
     -> Stage 2 (base garment composition)
     -> Stage 3 (design transformation)
     -> VisualizationResult
+
+The real Gemini acceptance experiment found that in-place editing of a
+previously generated image does not reliably execute precise design-
+geometry changes (see docs/visualization-engine.md's "Why rebuild instead
+of edit"). This code is kept -- clean, tested, isolated -- for a future
+provider/use case that specifically needs true in-place editing; it should
+not be revived as the default without new evidence a specific provider can
+do that reliably.
 
 Each stage has a narrow responsibility (section 2); this module only
 sequences them and builds the final result with full lineage (section 13,

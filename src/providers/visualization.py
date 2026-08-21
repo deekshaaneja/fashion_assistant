@@ -412,15 +412,16 @@ class FalKontextVisualizationProvider(DesignVisualizationProvider):
     def generate(self, request: VisualizationProviderRequest) -> VisualizationProviderResult:
         """One-shot compatibility path for the existing Phase 4 pipeline --
         uses only the first reference image (fal.ai's kontext primitive
-        takes one image), same as every staged call."""
+        takes one image), same as every staged call. Always makes exactly
+        ONE generation call regardless of `request.count` -- one request
+        must never silently fan out into multiple paid generations, and a
+        single real image must never be duplicated and reported as several
+        distinct visualizations (Phase 4 finalization, section 5-6)."""
         if not request.reference_images:
             return VisualizationProviderResult(
                 images=[], error="no reference image supplied", error_code="VISUALIZATION_PROVIDER_ERROR"
             )
-        result = self.edit_image(request.reference_images[0], request.prompt)
-        if request.count > 1 and result.images:
-            result.images = result.images * request.count
-        return result
+        return self.edit_image(request.reference_images[0], request.prompt)
 
 
 class GeminiVisualizationProvider(DesignVisualizationProvider):
@@ -497,14 +498,14 @@ class GeminiVisualizationProvider(DesignVisualizationProvider):
         return VisualizationProviderResult(images=images, attempts=1, latency_ms=latency_ms)
 
     def generate(self, request: VisualizationProviderRequest) -> VisualizationProviderResult:
+        """Always makes exactly ONE generation call regardless of
+        `request.count` -- see `FalKontextVisualizationProvider.generate()`
+        for why (Phase 4 finalization, section 5-6)."""
         if not request.reference_images:
             return VisualizationProviderResult(
                 images=[], error="no reference image supplied", error_code="VISUALIZATION_PROVIDER_ERROR"
             )
-        result = self.edit_image(request.reference_images[0], request.prompt)
-        if request.count > 1 and result.images:
-            result.images = result.images * request.count
-        return result
+        return self.edit_image(request.reference_images[0], request.prompt)
 
 
 def _extract_gemini_images(payload: dict) -> list[GeneratedImage]:

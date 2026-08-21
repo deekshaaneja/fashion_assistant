@@ -1,10 +1,23 @@
-"""visualize_design: Phase 4's top-level orchestrator (section 3's pipeline
-diagram) --
+"""visualize_design: Phase 4's top-level orchestrator, and the CANONICAL MVP
+rendering path --
 
-    DesignProposal + fabric image(s) + FabricProfile + VisualizationOptions
+    original FabricMaterialReference + current DesignProposal
     -> fabric reference selection -> VisualizationSpecification
-    -> DesignVisualizationProvider -> asset storage -> visual validation
-    -> (at most one bounded corrective regeneration) -> VisualizationResult
+    -> DesignVisualizationProvider (exactly ONE generation call)
+    -> asset storage -> visual validation -> VisualizationResult
+
+Every call is an independent fresh render from the ORIGINAL fabric photos
+-- never from a previously generated image (see the real-image acceptance
+experiment in docs/visualization-engine.md: iterative in-place editing
+failed on precise design-geometry edits; rebuild-per-DesignProposal-version
+did not). A generated image is disposable rendered output, never canonical
+design state -- `DesignProposal` is never inferred or updated from one.
+
+Corrective regeneration (generate -> validate -> FAIL -> regenerate once)
+is OFF by default (`VISUALIZATION_AUTO_CORRECT=false`, Phase 4
+finalization section 2) -- a probabilistic validator must never
+automatically trigger another paid generation without explicit opt-in.
+When enabled, at most one corrective attempt is ever made.
 
 The structured system stays authoritative throughout (section 2): nothing
 here ever writes back into `DesignProposal`, and provider failures always
@@ -257,8 +270,11 @@ def visualize_design(
         )
     else:
         overall, checks = compare_observation_to_specification(validation_result.observation, spec)
-        # Section 17-18: at most ONE corrective regeneration, only on FAIL.
-        if overall == ValidationVerdict.FAIL:
+        # Phase 4 finalization, section 2-3: OFF by default -- a
+        # probabilistic validator must never automatically trigger another
+        # PAID generation without explicit opt-in. When enabled, at most
+        # ONE corrective regeneration is made, only on a hard FAIL.
+        if settings.visualization_auto_correct and overall == ValidationVerdict.FAIL:
             corrective_attempts = 1
             corrective = provider.generate(
                 VisualizationProviderRequest(

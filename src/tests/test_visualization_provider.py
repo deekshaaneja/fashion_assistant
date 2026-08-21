@@ -19,12 +19,15 @@ from src.domain.models.visualization import (
 )
 from src.providers.settings import get_settings
 from src.providers.visualization import (
+    FalKontextVisualizationProvider,
+    GeminiVisualizationProvider,
     MockDesignVisualizationProvider,
     MockGeneratedImageValidator,
     OpenAICompatibleDesignVisualizationProvider,
     OpenAICompatibleGeneratedImageValidator,
     ReferenceImage,
     VisualizationProviderRequest,
+    estimated_cost_per_image_usd,
     get_design_visualization_provider,
     get_generated_image_validator,
 )
@@ -61,6 +64,82 @@ def test_mock_provider_respects_count():
         VisualizationProviderRequest(specification=_spec(), reference_images=[_reference()], prompt="p", count=2)
     )
     assert len(result.images) == 2
+
+
+def test_gemini_generate_never_duplicates_one_image_for_count_greater_than_one(monkeypatch):
+    """Phase 4 finalization, section 5-6: one real generation must never be
+    reported as N distinct visualizations. `VisualizationOptions` already
+    rejects count>1 before reaching a provider, but the provider itself
+    must be correct in isolation too (e.g. against a bare
+    `VisualizationProviderRequest`, which has no such guard)."""
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    get_settings.cache_clear()
+
+    png_bytes = b"\x89PNG\r\n\x1a\nfake"
+    b64 = base64.b64encode(png_bytes).decode()
+
+    class _FakeResponse:
+        status_code = 200
+
+        def json(self):
+            return {
+                "candidates": [
+                    {"content": {"parts": [{"inlineData": {"mimeType": "image/png", "data": b64}}]}}
+                ]
+            }
+
+    monkeypatch.setattr("httpx.post", lambda *a, **k: _FakeResponse())
+    try:
+        result = GeminiVisualizationProvider().generate(
+            VisualizationProviderRequest(
+                specification=_spec(), reference_images=[_reference()], prompt="p", count=3
+            )
+        )
+    finally:
+        get_settings.cache_clear()
+    assert len(result.images) == 1
+
+
+def test_fal_generate_never_duplicates_one_image_for_count_greater_than_one(monkeypatch):
+    monkeypatch.setenv("FAL_KEY", "test-key")
+    get_settings.cache_clear()
+
+    class _FakeResponse:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"images": [{"url": "https://example.com/out.jpg", "content_type": "image/jpeg"}]}
+
+    class _FakeImageResponse:
+        content = b"fake-image-bytes"
+
+        def raise_for_status(self):
+            return None
+
+    def _fake_post(url, **kwargs):
+        return _FakeResponse()
+
+    monkeypatch.setattr("httpx.post", _fake_post)
+    monkeypatch.setattr("httpx.get", lambda *a, **k: _FakeImageResponse())
+    try:
+        result = FalKontextVisualizationProvider().generate(
+            VisualizationProviderRequest(
+                specification=_spec(), reference_images=[_reference()], prompt="p", count=3
+            )
+        )
+    finally:
+        get_settings.cache_clear()
+    assert len(result.images) == 1
+
+
+def test_estimated_cost_per_image_known_providers():
+    assert estimated_cost_per_image_usd("gemini") is not None
+    assert estimated_cost_per_image_usd("fal") is not None
+    assert estimated_cost_per_image_usd("mock") is None
+    assert estimated_cost_per_image_usd("unknown") is None
 
 
 def test_live_provider_returns_error_on_repeated_network_failure(monkeypatch):

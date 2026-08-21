@@ -100,9 +100,40 @@ def test_provider_failure_returns_structured_result_not_raise(monkeypatch):
     assert result.validation.overall == ValidationVerdict.UNKNOWN
 
 
-def test_corrective_regeneration_is_bounded_to_exactly_one_attempt(monkeypatch):
-    """Sections 17-18: FAIL triggers exactly one corrective regeneration,
-    never an unbounded loop -- even if the corrective attempt ALSO fails."""
+def test_auto_correct_is_off_by_default_even_on_validation_fail(monkeypatch):
+    """Phase 4 finalization, section 2/22: a probabilistic validator must
+    never automatically trigger a second paid generation without explicit
+    opt-in. Default config: generate once, validate, return FAIL/warnings
+    as-is -- no corrective regeneration."""
+    design, image_analysis, images = _design_and_analysis()
+    provider = _CountingProvider()
+    monkeypatch.setattr(pipeline_module, "get_design_visualization_provider", lambda: provider)
+
+    from src.domain.models.visualization import GeneratedImageObservation
+
+    always_wrong = GeneratedImageObservation(
+        garment_subject="a completely different garment entirely",
+        neckline="v_neck",
+        sleeve_length="sleeveless",
+    )
+    validator = _FixedObservationValidator([always_wrong, always_wrong])
+    monkeypatch.setattr(pipeline_module, "get_generated_image_validator", lambda: validator)
+
+    result = pipeline_module.visualize_design(design, image_analysis, images, VisualizationOptions())
+    assert provider.calls == 1
+    assert validator.calls == 1
+    assert result.generation_metadata.corrective_regenerations == 0
+    assert result.validation.corrective_regeneration_attempted is False
+    assert result.validation.overall == ValidationVerdict.FAIL
+    assert result.images  # the (imperfect) image is still returned, never hidden
+
+
+def test_auto_correct_opt_in_is_bounded_to_exactly_one_attempt(monkeypatch):
+    """Phase 4 finalization, section 3/23: with VISUALIZATION_AUTO_CORRECT=true,
+    FAIL triggers exactly one corrective regeneration, never an unbounded
+    loop -- even if the corrective attempt ALSO fails."""
+    monkeypatch.setenv("VISUALIZATION_AUTO_CORRECT", "true")
+    get_settings.cache_clear()
     design, image_analysis, images = _design_and_analysis()
     provider = _CountingProvider()
     monkeypatch.setattr(pipeline_module, "get_design_visualization_provider", lambda: provider)
@@ -158,6 +189,24 @@ def test_timing_stages_are_recorded():
         "visualization.total_ms",
     ):
         assert stage in timing
+
+
+def test_telemetry_reflects_exactly_one_generation_for_one_request(monkeypatch):
+    """Phase 4 finalization, section 8/25: one visualization request must
+    correspond to exactly one generated image and one generation-cost
+    event -- using the project's existing telemetry fields (`attempts`,
+    `corrective_regenerations`, and the length of `images`), never an
+    invented field."""
+    design, image_analysis, images = _design_and_analysis()
+    provider = _CountingProvider()
+    monkeypatch.setattr(pipeline_module, "get_design_visualization_provider", lambda: provider)
+
+    result = pipeline_module.visualize_design(design, image_analysis, images, VisualizationOptions())
+
+    assert provider.calls == 1
+    assert len(result.images) == 1
+    assert result.generation_metadata.attempts == 1
+    assert result.generation_metadata.corrective_regenerations == 0
 
 
 def test_traceability_fields_present():

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -100,3 +102,18 @@ def test_get_visualization_asset_roundtrip(client):
 def test_get_visualization_asset_missing_returns_404(client):
     resp = client.get("/v1/visualizations/does-not-exist.png")
     assert resp.status_code == 404
+
+
+def test_visualize_design_endpoint_rejects_count_greater_than_one(client, tmp_path, monkeypatch):
+    """Phase 4 finalization, section 6/24: a count>1 request must be
+    rejected before any provider call -- confirmed here by asserting no
+    asset was ever written to the store."""
+    design_json, analysis_json, images = _design_and_analysis_json()
+    resp = client.post(
+        "/v1/tools/visualize-design",
+        files=[("images", (images[0].image_id, images[0].data, "image/jpeg"))],
+        data={"design": design_json, "fabric_analysis": analysis_json, "options": json.dumps({"count": 2})},
+    )
+    assert resp.status_code == 400
+    assert "MULTIPLE_VISUALIZATIONS_NOT_SUPPORTED" in resp.json()["detail"]
+    assert list(tmp_path.iterdir()) == []  # no provider call was ever made, nothing was stored

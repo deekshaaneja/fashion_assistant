@@ -97,6 +97,13 @@ class Settings(BaseSettings):
     visualization_validation_model: str = Field(
         default="", alias="VISUALIZATION_VALIDATION_MODEL", description="blank = reuse VISION_MODEL"
     )
+    # Phase 4 finalization: OFF by default. The real Gemini acceptance
+    # experiment established that localized corrective editing is
+    # unreliable, and the visual validator itself is only probabilistic --
+    # neither is a safe trigger for an automatic second PAID generation
+    # without explicit opt-in. When enabled, at most one corrective
+    # generation is ever made (never unbounded).
+    visualization_auto_correct: bool = Field(default=False, alias="VISUALIZATION_AUTO_CORRECT")
 
     # fal.ai -- evaluated during the Phase 4.1 provider spike (accepts
     # reference-conditioned image edits), but NOT required for MVP: the

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from src.domain.enums import (
     DecorationLevel,
@@ -55,12 +55,30 @@ class VisualizationQuality(str, Enum):
 class VisualizationOptions(DomainModel):
     """The user-level ask (section 5) -- everything else needed to render is
     derived from the `DesignProposal`/`FabricProfileWithProvenance` supplied
-    alongside it, never re-declared here."""
+    alongside it, never re-declared here.
+
+    Phase 4 MVP policy: exactly one visualization per request (`count=1`).
+    A provider request for N images must never turn into N paid generation
+    calls, or into one generated image duplicated N times and reported as
+    N distinct visualizations -- both would make cost/telemetry dishonest.
+    A future Phase 5 agent that wants several versions makes several
+    explicit, separately-costed calls (e.g. "show me three versions"),
+    never an implicit fan-out hidden inside one request."""
 
     view: ViewAngle = ViewAngle.FRONT
     presentation: PresentationMode = PresentationMode.MANNEQUIN
     quality: VisualizationQuality = VisualizationQuality.CONCEPT
-    count: int = Field(default=1, ge=1, le=3)
+    count: int = 1
+
+    @field_validator("count")
+    @classmethod
+    def _count_must_be_one(cls, value: int) -> int:
+        if value != 1:
+            raise ValueError(
+                "MULTIPLE_VISUALIZATIONS_NOT_SUPPORTED: count must be 1 -- request separate visualizations "
+                "individually rather than asking for more than one per call."
+            )
+        return value
 
 
 # --- VisualizationSpecification (sections 4, 47) --------------------------
