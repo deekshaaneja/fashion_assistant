@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, ValidationError
 
 from src.domain.models.client_brief import ClientBrief
@@ -16,7 +17,8 @@ from src.domain.models.design_dna import DesignDNA
 from src.domain.models.design_proposal import DesignProposal
 from src.domain.models.fabric import FabricProperties
 from src.domain.models.fabric_analysis import FabricObservation
-from src.domain.models.fabric_vision import ImageRole
+from src.domain.models.fabric_vision import FabricImageAnalysisResult, ImageRole
+from src.domain.models.visualization import VisualizationOptions
 from src.fashion_engine.fabric import vision_pipeline as _vision_pipeline
 from src.fashion_engine.fabric.vision_pipeline import UploadedFabricImage
 from src.tools.analyze_fabric import analyze_fabric as _analyze_fabric
@@ -35,6 +37,7 @@ from src.tools.recommend_proportions import recommend_proportions as _recommend_
 from src.tools.recommend_silhouettes import recommend_silhouettes as _recommend_silhouettes
 from src.tools.recommend_sleeves import recommend_sleeves as _recommend_sleeves
 from src.tools.recommend_styling import recommend_styling as _recommend_styling
+from src.tools.visualize_design import visualize_design as _visualize_design
 
 app = FastAPI(
     title="Fashion Intelligence Kernel",
@@ -373,3 +376,46 @@ def fabric_image_recommend_silhouettes(
         "image_analysis": result.image_analysis.model_dump(),
         "silhouette_recommendation": result.silhouette_recommendation.model_dump(),
     }
+
+
+# --- Phase 4: Fabric-Preserving Design Visualization ------------------------
+# Section 30: no persistent design storage exists yet, so the client passes
+# the full DesignProposal + the Phase 3 FabricImageAnalysisResult it was
+# generated against, directly -- never a reason to stand up a database.
+
+
+@app.post("/v1/tools/visualize-design")
+def visualize_design(
+    images: list[UploadFile] = File(...),
+    design: str = Form(...),
+    fabric_analysis: str = Form(...),
+    image_roles: str | None = Form(None),
+    options: str | None = Form(None),
+) -> dict:
+    uploaded = _parse_uploaded_images(images, image_roles)
+    parsed_design = _parse_json_form_field(design, DesignProposal)
+    parsed_fabric_analysis = _parse_json_form_field(fabric_analysis, FabricImageAnalysisResult)
+    parsed_options = _parse_json_form_field(options, VisualizationOptions)
+    if parsed_design is None or parsed_fabric_analysis is None:
+        raise HTTPException(status_code=400, detail="design and fabric_analysis are required")
+    result = _visualize_design(parsed_design, parsed_fabric_analysis, uploaded, parsed_options)
+    return result.model_dump()
+
+
+@app.get("/v1/visualizations/{filename}")
+def get_visualization_asset(filename: str) -> Response:
+    """Serves a stored Phase 4 asset by its stable application reference
+    (section 27-28) -- never a raw provider URL, never an internal
+    filesystem path (section 34)."""
+    from src.fashion_engine.visualization.asset_store import get_visualization_asset_store
+
+    content_type = "image/png"
+    if filename.endswith((".jpg", ".jpeg")):
+        content_type = "image/jpeg"
+    elif filename.endswith(".webp"):
+        content_type = "image/webp"
+    try:
+        data = get_visualization_asset_store().read(f"visualizations/{filename}")
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="Visualization asset not found") from exc
+    return Response(content=data, media_type=content_type)
