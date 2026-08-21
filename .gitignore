@@ -15,3 +15,6 @@ apps/web/dist/
 # Real Phase 3 evaluation photographs -- not synthetic test fixtures, keep
 # out of git by default (may be proprietary boutique fabric photos).
 eval_data/
+# Phase 4 generated visualization assets -- local dev filesystem storage,
+# not source, not fixtures.
+artifacts/

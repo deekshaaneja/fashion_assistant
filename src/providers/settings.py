@@ -68,6 +68,62 @@ class Settings(BaseSettings):
     vision_max_tokens: int = Field(default=1500, alias="VISION_MAX_TOKENS")
     vision_timeout_s: int = Field(default=25, alias="VISION_TIMEOUT_S")
 
+    # Phase 4 -- design visualization. Separate from VISION_*/LLM_* because
+    # the image-GENERATION model is a third, distinct model from both the
+    # text model and the vision-UNDERSTANDING model (empirically confirmed:
+    # `qwen-image-edit` is the reference-conditioned image-editing model
+    # this account's DashScope gateway actually exposes -- see
+    # docs/visualization-engine.md). "auto" (default) = visualization_enabled
+    # decides mock vs. live, matching every other provider in the kernel.
+    visualization_enabled: bool = Field(default=False, alias="VISUALIZATION_ENABLED")
+    visualization_provider: str = Field(default="auto", alias="VISUALIZATION_PROVIDER")
+    visualization_base_url: str = Field(
+        default="http://localhost:11434/v1", alias="VISUALIZATION_BASE_URL"
+    )
+    visualization_model: str = Field(default="qwen-image-edit", alias="VISUALIZATION_MODEL")
+    # Empty by default -- reuse LLM_API_KEY rather than duplicating a secret.
+    visualization_api_key: str = Field(default="", alias="VISUALIZATION_API_KEY")
+    # Section 11/50: this account's qwen-image-edit rejected a request with
+    # 0 reference images and documented a 1-3 image limit -- kept
+    # configurable rather than hardcoded in provider code.
+    visualization_max_reference_images: int = Field(default=3, alias="VISUALIZATION_MAX_REFERENCE_IMAGES")
+    visualization_timeout_s: int = Field(default=45, alias="VISUALIZATION_TIMEOUT_S")
+    visualization_storage_dir: str = Field(
+        default="artifacts/visualizations", alias="VISUALIZATION_STORAGE_DIR"
+    )
+    # A separate, smaller model for visual VALIDATION (analyzing a generated
+    # image against the specification, section 16) -- reuses the Phase 3
+    # vision-understanding model/credential by default rather than a new one.
+    visualization_validation_model: str = Field(
+        default="", alias="VISUALIZATION_VALIDATION_MODEL", description="blank = reuse VISION_MODEL"
+    )
+
+    # fal.ai -- evaluated during the Phase 4.1 provider spike (accepts
+    # reference-conditioned image edits), but NOT required for MVP: the
+    # Gemini real-image acceptance experiment (see docs/visualization-engine.md)
+    # passed using the rebuild-per-version pattern alone. Kept configured
+    # and available behind `ImageEditCapableProvider` for a future provider
+    # that specifically needs localized in-place editing, never as the MVP
+    # default.
+    fal_api_key: str = Field(default="", alias="FAL_KEY")
+    fal_edit_model: str = Field(default="fal-ai/flux-pro/kontext", alias="FAL_EDIT_MODEL")
+    fal_timeout_s: int = Field(default=90, alias="FAL_TIMEOUT_S")
+    fal_estimated_cost_per_image_usd: float = Field(default=0.04, alias="FAL_ESTIMATED_COST_PER_IMAGE_USD")
+
+    # Gemini -- the MVP Phase 4 visualization provider (validated on the
+    # real organza anchor: preserves fabric identity/motif/embroidery/
+    # color/transparency, and correctly executes exact target design
+    # geometry via the rebuild-per-version pattern -- see
+    # docs/visualization-engine.md). `estimated_cost_per_image_usd` is an
+    # ESTIMATE from the spike's observed cost, not a billed figure from a
+    # provider usage API (Gemini doesn't expose one per-image).
+    gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
+    gemini_image_model: str = Field(default="gemini-2.5-flash-image", alias="GEMINI_IMAGE_MODEL")
+    gemini_timeout_s: int = Field(default=90, alias="GEMINI_TIMEOUT_S")
+    gemini_estimated_cost_per_image_usd: float = Field(
+        default=0.04, alias="GEMINI_ESTIMATED_COST_PER_IMAGE_USD"
+    )
+
 
 @lru_cache
 def get_settings() -> Settings:
