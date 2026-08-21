@@ -29,6 +29,7 @@ from src.providers.visualization import (
     VisualizationProviderRequest,
     estimated_cost_per_image_usd,
     get_design_visualization_provider,
+    get_edit_capable_provider,
     get_generated_image_validator,
 )
 
@@ -248,6 +249,83 @@ def test_get_design_visualization_provider_live_mode(monkeypatch):
     get_settings.cache_clear()
     try:
         assert isinstance(get_design_visualization_provider(), OpenAICompatibleDesignVisualizationProvider)
+    finally:
+        get_settings.cache_clear()
+
+
+def test_get_design_visualization_provider_explicit_gemini_mode(monkeypatch):
+    monkeypatch.setenv("VISUALIZATION_PROVIDER", "gemini")
+    get_settings.cache_clear()
+    try:
+        assert isinstance(get_design_visualization_provider(), GeminiVisualizationProvider)
+    finally:
+        get_settings.cache_clear()
+
+
+def test_get_design_visualization_provider_explicit_fal_mode(monkeypatch):
+    monkeypatch.setenv("VISUALIZATION_PROVIDER", "fal")
+    get_settings.cache_clear()
+    try:
+        assert isinstance(get_design_visualization_provider(), FalKontextVisualizationProvider)
+    finally:
+        get_settings.cache_clear()
+
+
+def test_get_design_visualization_provider_auto_disabled_with_gemini_key_is_still_mock(monkeypatch):
+    """Regression: merely having GEMINI_API_KEY configured must never be
+    enough to select a live (paid) provider when VISUALIZATION_ENABLED is
+    false -- that would contradict the configuration contract every other
+    provider in the kernel follows."""
+    monkeypatch.setenv("VISUALIZATION_PROVIDER", "auto")
+    monkeypatch.setenv("VISUALIZATION_ENABLED", "false")
+    monkeypatch.setenv("GEMINI_API_KEY", "present-but-should-not-matter")
+    monkeypatch.setenv("FAL_KEY", "present-but-should-not-matter")
+    get_settings.cache_clear()
+    try:
+        assert isinstance(get_design_visualization_provider(), MockDesignVisualizationProvider)
+    finally:
+        get_settings.cache_clear()
+
+
+def test_get_design_visualization_provider_auto_enabled_with_gemini_key_is_gemini(monkeypatch):
+    monkeypatch.setenv("VISUALIZATION_PROVIDER", "auto")
+    monkeypatch.setenv("VISUALIZATION_ENABLED", "true")
+    monkeypatch.setenv("GEMINI_API_KEY", "present")
+    get_settings.cache_clear()
+    try:
+        assert isinstance(get_design_visualization_provider(), GeminiVisualizationProvider)
+    finally:
+        get_settings.cache_clear()
+
+
+def test_get_edit_capable_provider_explicit_gemini_mode(monkeypatch):
+    monkeypatch.setenv("VISUALIZATION_PROVIDER", "gemini")
+    get_settings.cache_clear()
+    try:
+        assert isinstance(get_edit_capable_provider(), GeminiVisualizationProvider)
+    finally:
+        get_settings.cache_clear()
+
+
+def test_get_edit_capable_provider_auto_disabled_with_gemini_key_is_still_mock(monkeypatch):
+    monkeypatch.setenv("VISUALIZATION_PROVIDER", "auto")
+    monkeypatch.setenv("VISUALIZATION_ENABLED", "false")
+    monkeypatch.setenv("GEMINI_API_KEY", "present-but-should-not-matter")
+    monkeypatch.setenv("FAL_KEY", "present-but-should-not-matter")
+    get_settings.cache_clear()
+    try:
+        assert isinstance(get_edit_capable_provider(), MockDesignVisualizationProvider)
+    finally:
+        get_settings.cache_clear()
+
+
+def test_get_edit_capable_provider_auto_enabled_with_gemini_key_is_gemini(monkeypatch):
+    monkeypatch.setenv("VISUALIZATION_PROVIDER", "auto")
+    monkeypatch.setenv("VISUALIZATION_ENABLED", "true")
+    monkeypatch.setenv("GEMINI_API_KEY", "present")
+    get_settings.cache_clear()
+    try:
+        assert isinstance(get_edit_capable_provider(), GeminiVisualizationProvider)
     finally:
         get_settings.cache_clear()
 

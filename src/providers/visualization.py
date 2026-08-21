@@ -556,7 +556,14 @@ def get_design_visualization_provider() -> DesignVisualizationProvider:
     """The MVP default is Gemini (validated real-image acceptance -- see
     docs/visualization-engine.md); Aliyun remains selectable explicitly but
     is not preferred by "auto" since it was never proven to return usable
-    images on the accounts investigated."""
+    images on the accounts investigated.
+
+    Merely having a GEMINI_API_KEY/FAL_KEY configured must never be enough
+    to trigger a live (paid) provider call on its own -- that would
+    contradict the configuration contract every other provider in the
+    kernel follows (VISION_ENABLED, LLM_ENABLED, ...). "auto" only
+    considers live providers when `VISUALIZATION_ENABLED=true`; otherwise
+    it is mock regardless of which credentials happen to be present."""
     settings = get_settings()
     mode = (settings.visualization_provider or "auto").strip().lower()
 
@@ -569,16 +576,15 @@ def get_design_visualization_provider() -> DesignVisualizationProvider:
     if mode in ("live", "openai_compatible", "alibaba", "aliyun", "dashscope"):
         return OpenAICompatibleDesignVisualizationProvider()
 
-    # auto: prefer Gemini (MVP provider) when configured, then fal, then
-    # Aliyun only if explicitly enabled, otherwise mock -- never silently
-    # fail with no provider at all.
+    # auto: visualization must be explicitly enabled before a credential's
+    # mere presence can select a live provider at all.
+    if not settings.visualization_enabled:
+        return MockDesignVisualizationProvider()
     if settings.gemini_api_key:
         return GeminiVisualizationProvider()
     if settings.fal_api_key:
         return FalKontextVisualizationProvider()
-    if settings.visualization_enabled:
-        return OpenAICompatibleDesignVisualizationProvider()
-    return MockDesignVisualizationProvider()
+    return OpenAICompatibleDesignVisualizationProvider()
 
 
 def get_edit_capable_provider() -> ImageEditCapableProvider:
@@ -588,7 +594,11 @@ def get_edit_capable_provider() -> ImageEditCapableProvider:
     both wired in behind this same capability so the spike can compare
     them without touching the staged pipeline itself (section 31-32).
     Aliyun's `qwen-image-edit` is not routed here (it doesn't implement
-    this capability) until it's proven functional (section 28)."""
+    this capability) until it's proven functional (section 28).
+
+    Same configuration contract as `get_design_visualization_provider()`:
+    a credential's mere presence never selects a live provider unless
+    `VISUALIZATION_ENABLED=true` (or the provider is named explicitly)."""
     settings = get_settings()
     mode = (settings.visualization_provider or "auto").strip().lower()
 
@@ -599,8 +609,10 @@ def get_edit_capable_provider() -> ImageEditCapableProvider:
     if mode == "gemini":
         return GeminiVisualizationProvider()
 
-    # auto: prefer whichever live provider has a credential configured,
-    # mock otherwise -- never silently fail with no provider at all.
+    # auto: visualization must be explicitly enabled before a credential's
+    # mere presence can select a live provider at all.
+    if not settings.visualization_enabled:
+        return MockDesignVisualizationProvider()
     if settings.gemini_api_key:
         return GeminiVisualizationProvider()
     if settings.fal_api_key:
