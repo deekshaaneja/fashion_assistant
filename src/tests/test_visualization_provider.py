@@ -287,6 +287,20 @@ def test_get_design_visualization_provider_auto_disabled_with_gemini_key_is_stil
         get_settings.cache_clear()
 
 
+def test_get_design_visualization_provider_auto_disabled_with_fal_key_alone_is_still_mock(monkeypatch):
+    """Same regression, isolating FAL_KEY alone (no Gemini key) so the
+    protection is proven independent of which credential is present."""
+    monkeypatch.setenv("VISUALIZATION_PROVIDER", "auto")
+    monkeypatch.setenv("VISUALIZATION_ENABLED", "false")
+    monkeypatch.setenv("GEMINI_API_KEY", "")
+    monkeypatch.setenv("FAL_KEY", "present-but-should-not-matter")
+    get_settings.cache_clear()
+    try:
+        assert isinstance(get_design_visualization_provider(), MockDesignVisualizationProvider)
+    finally:
+        get_settings.cache_clear()
+
+
 def test_get_design_visualization_provider_auto_enabled_with_gemini_key_is_gemini(monkeypatch):
     monkeypatch.setenv("VISUALIZATION_PROVIDER", "auto")
     monkeypatch.setenv("VISUALIZATION_ENABLED", "true")
@@ -311,6 +325,18 @@ def test_get_edit_capable_provider_auto_disabled_with_gemini_key_is_still_mock(m
     monkeypatch.setenv("VISUALIZATION_PROVIDER", "auto")
     monkeypatch.setenv("VISUALIZATION_ENABLED", "false")
     monkeypatch.setenv("GEMINI_API_KEY", "present-but-should-not-matter")
+    monkeypatch.setenv("FAL_KEY", "present-but-should-not-matter")
+    get_settings.cache_clear()
+    try:
+        assert isinstance(get_edit_capable_provider(), MockDesignVisualizationProvider)
+    finally:
+        get_settings.cache_clear()
+
+
+def test_get_edit_capable_provider_auto_disabled_with_fal_key_alone_is_still_mock(monkeypatch):
+    monkeypatch.setenv("VISUALIZATION_PROVIDER", "auto")
+    monkeypatch.setenv("VISUALIZATION_ENABLED", "false")
+    monkeypatch.setenv("GEMINI_API_KEY", "")
     monkeypatch.setenv("FAL_KEY", "present-but-should-not-matter")
     get_settings.cache_clear()
     try:
