@@ -131,6 +131,21 @@ class Settings(BaseSettings):
         default=0.04, alias="GEMINI_ESTIMATED_COST_PER_IMAGE_USD"
     )
 
+    # Phase 5 -- conversational orchestration. Separate from LLM_* because
+    # the agent's own "turn decision" call is its own capability boundary
+    # even though it reuses LLM_BASE_URL/LLM_MODEL/LLM_API_KEY by default --
+    # "auto" (default) = agent_enabled decides mock vs. live, matching every
+    # other provider in the kernel. Deliberately no AGENT_API_KEY override:
+    # unlike vision/visualization, there is no known case where the agent's
+    # turn-decision call needs a distinct credential from the rest of the
+    # LLM traffic.
+    agent_enabled: bool = Field(default=False, alias="AGENT_ENABLED")
+    agent_provider: str = Field(default="auto", alias="AGENT_PROVIDER")
+    agent_max_tool_calls_per_turn: int = Field(default=5, alias="AGENT_MAX_TOOL_CALLS_PER_TURN")
+    agent_max_tokens: int = Field(default=800, alias="AGENT_MAX_TOKENS")
+    agent_thinking: bool = Field(default=False, alias="AGENT_THINKING")
+    agent_session_db_path: str = Field(default="data/sessions.db", alias="AGENT_SESSION_DB_PATH")
+
 
 @lru_cache
 def get_settings() -> Settings:

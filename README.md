@@ -3,12 +3,13 @@
 An AI Co-Designer for Indian fashion boutiques -- see `docs/architecture.md`
 for the full design rationale. This is deliberately *not* a full
 application yet: it's the deterministic fashion-intelligence kernel + a
-provider-backed visualization layer that will later sit behind a
-conversational agent.
+provider-backed visualization layer, now orchestrated by a conversational
+agent layer (`POST /v1/chat`) -- see `docs/agent-orchestration.md`.
 
-**Development status: Phases 1-4 complete. Phase 5 (a conversational
-co-designer agent) is not yet implemented** -- everything below is a
-programmatic tool/API layer, not a chat product.
+**Development status: Phases 1-5 complete.** Phase 5 adds a conversational
+orchestration layer over the existing tool/API layer -- see
+`docs/agent-orchestration.md`. Phase 6+ (trend intelligence, MCP,
+ecommerce/CRM integration, a production frontend) is not yet implemented.
 
 ## What it does today
 
@@ -31,7 +32,13 @@ PHASE 4 -- Fabric-Preserving Design Visualization
         |   original FabricMaterialReference + current DesignProposal
         |   -> fresh Gemini render -> VisualizationResult
         v
-"Here is what YOUR fabric could look like as THIS design."
+PHASE 5 -- Conversational Co-Designer Orchestration
+        |   natural-language turns -> session state + design versioning
+        |   -> the SAME Phase 1-4 tools above, sequenced -- never a second
+        |   fashion/vision/design/visualization implementation
+        v
+"I have this fabric." / "Give me three options." / "Make the neckline
+square." / "Show me." -- a coherent design conversation, POST /v1/chat.
 ```
 
 Phase 3 can also be skipped by declaring a fabric by name/properties
@@ -163,9 +170,9 @@ in-place image editing was tried and rejected for this.
 - No virtual try-on, no customer photographs, no body/fit simulation.
 - One visualization per request (no batch/multi-version generation yet --
   each version is an intentional, separately-costed call).
-- No conversational agent/chatbot yet -- every capability above is a
-  direct, stateless tool/API call.
-- No trend intelligence, CRM, or ecommerce integration.
+- No trend intelligence, MCP, CRM, or ecommerce integration yet (Phase 5's
+  conversational agent explicitly declines to fabricate trend/designer
+  claims rather than guess).
 
 ## Documentation
 
@@ -177,6 +184,7 @@ in-place image editing was tried and rejected for this.
 - `docs/visualization-engine.md` -- Phase 4 visualization architecture, provider
   evaluation, and the rebuild-vs-edit acceptance experiment
 - `docs/evaluation.md` -- the golden-scenario test methodology
+- `docs/agent-orchestration.md` -- Phase 5 conversational orchestration architecture
 
 ## Project structure
 
@@ -187,15 +195,17 @@ src/fashion_engine/       Deterministic implementations behind each tool
   design/                 Phase 2 design generation, validation, scoring
   visualization/          Phase 4 visualization pipeline (MVP path + experimental staged path)
 src/rules/                Seed-data repositories + the compatibility rule engine
-src/tools/                Typed, documented tool boundary (the future agent's toolkit)
-src/providers/            LLM/vision/visualization provider abstractions (disabled by default)
-src/api/                  FastAPI app exposing every tool as a POST endpoint
+src/tools/                Typed, documented tool boundary (the Phase 5 agent's toolkit)
+src/providers/            LLM/vision/visualization/agent provider abstractions (disabled by default)
+src/agent/                Phase 5 orchestration: tool registry, design versioning, session store, turn loop
+src/api/                  FastAPI app exposing every tool + POST /v1/chat
 src/tests/                pytest suite
 data/seed/                Fabric/garment/silhouette/embellishment/consumption catalogs
 data/rules/               General fabric<->silhouette compatibility rule table
 data/golden/              Golden scenarios for Phase 1
+data/sessions.db          Phase 5 conversational session store (gitignored, local dev)
 eval_data/                Real fabric photographs for Phase 3/4 acceptance (gitignored)
 artifacts/                Generated visualization assets (gitignored, local dev storage)
 docs/                     Architecture + domain + rule-engine + tool-contract + eval docs
-scripts/                  Golden-scenario and real-provider evaluation runners
+scripts/                  Golden-scenario, real-provider evaluation, and chat CLI runners
 ```

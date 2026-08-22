@@ -18,3 +18,6 @@ eval_data/
 # Phase 4 generated visualization assets -- local dev filesystem storage,
 # not source, not fixtures.
 artifacts/
+# Phase 5 conversational session persistence -- local dev sqlite store,
+# not source, not fixtures.
+data/sessions.db

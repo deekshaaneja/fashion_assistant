@@ -10,6 +10,8 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, ValidationError
 
+from src.agent.loop import run_turn
+from src.agent.session_store import get_session_store
 from src.domain.models.client_brief import ClientBrief
 from src.domain.models.common import Range
 from src.domain.models.context import RecommendationContext
@@ -18,6 +20,7 @@ from src.domain.models.design_proposal import DesignProposal
 from src.domain.models.fabric import FabricProperties
 from src.domain.models.fabric_analysis import FabricObservation
 from src.domain.models.fabric_vision import FabricImageAnalysisResult, ImageRole
+from src.domain.models.session import DesignSession
 from src.domain.models.visualization import VisualizationOptions
 from src.fashion_engine.fabric import vision_pipeline as _vision_pipeline
 from src.fashion_engine.fabric.vision_pipeline import UploadedFabricImage
@@ -400,6 +403,48 @@ def visualize_design(
         raise HTTPException(status_code=400, detail="design and fabric_analysis are required")
     result = _visualize_design(parsed_design, parsed_fabric_analysis, uploaded, parsed_options)
     return result.model_dump()
+
+
+# --- Phase 5: Conversational Co-Designer -------------------------------
+# Orchestration only -- every mutation below goes through
+# `src.agent.loop.run_turn`, which itself only ever calls the SAME tool
+# functions imported above. No fashion/vision/design/visualization logic
+# lives in this endpoint.
+
+
+class ChatArtifactRef(StrictModel):
+    kind: str
+    id: str
+    design_family_id: str | None = None
+
+
+class ChatResponse(StrictModel):
+    session_id: str
+    message: str
+    artifacts: list[ChatArtifactRef]
+    current_design_version: str | None
+    turn_id: str
+
+
+@app.post("/v1/chat")
+def chat(
+    session_id: str = Form(...),
+    message: str = Form(...),
+    images: list[UploadFile] = File(default=[]),
+    image_roles: str | None = Form(None),
+) -> dict:
+    store = get_session_store()
+    session = store.load(session_id) or DesignSession(session_id=session_id)
+    uploaded = _parse_uploaded_images(images, image_roles) if images else []
+    result = run_turn(session, message, uploaded)
+    response = ChatResponse(
+        session_id=result.session.session_id,
+        message=result.message,
+        artifacts=[ChatArtifactRef(**a) for a in result.artifacts],
+        current_design_version=result.current_design_version,
+        turn_id=result.turn_id,
+    )
+    return response.model_dump()
 
 
 @app.get("/v1/visualizations/{filename}")
